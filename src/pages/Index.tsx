@@ -61,7 +61,7 @@ const Index = () => {
           
           <ContinueButton onClick={handleContinue} className="border-destructive bg-destructive" />
           
-          {selectedPack && <div className="text-center py-4">
+          {selectedPack && <div className="text-center py-4 bg-destructive border-destructive">
               <span className="text-muted-foreground">Total: </span>
               <span className="font-bold text-foreground">
                 {selectedPack.currency} {selectedPack.price.toFixed(2)}
