@@ -45,7 +45,7 @@ const Index = () => {
   };
   const selectedPack = packages.find(p => p.id === selectedPackage);
   return <div className="min-h-screen bg-background">
-      <Header className="bg-primary-foreground border-primary-foreground" />
+      <Header />
       
       <main className="container py-4 space-y-6">
         <MembershipsBanner />
@@ -59,7 +59,7 @@ const Index = () => {
           
           <PaymentSection selectedPayment={selectedPayment} onSelectPayment={setSelectedPayment} />
           
-          <ContinueButton onClick={handleContinue} className="border-destructive bg-destructive" />
+          <ContinueButton onClick={handleContinue} />
           
           {selectedPack && <div className="text-center py-4 bg-destructive border-destructive">
               <span className="text-muted-foreground">Total: </span>
