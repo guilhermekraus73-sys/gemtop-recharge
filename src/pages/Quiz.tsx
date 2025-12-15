@@ -1,0 +1,336 @@
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
+type Question = {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  imageUrl: string;
+};
+
+const questions: Question[] = [
+  {
+    question: "¿Cuál es el nombre del modo de juego principal de Free Fire?",
+    options: ["Team Deathmatch", "Clash Squad", "Battle Royale", "Ranked Mode"],
+    correctIndex: 2,
+    imageUrl: "https://recargasdiamante.site/assets/quiz-illustration-xs2wBzmH.jpg",
+  },
+  {
+    question: "¿Cuál es la habilidad especial del personaje DJ Alok?",
+    options: ["Curación en área", "Velocidad aumentada", "Daño extra", "Escudo de protección"],
+    correctIndex: 0,
+    imageUrl: "https://recargasdiamante.site/assets/q2-dj-alok-CM_6vL28.jpg",
+  },
+  {
+    question: "¿Cuál es el mapa clásico de Free Fire?",
+    options: ["Kalahari", "Alpine", "Purgatory", "Bermuda"],
+    correctIndex: 3,
+    imageUrl: "https://recargasdiamante.site/assets/q3-map-Cb4k91U-.jpg",
+  },
+  {
+    question: "¿Cuál es el arma de francotirador más poderosa en Free Fire?",
+    options: ["Kar98k", "AWM", "M82B", "SVD"],
+    correctIndex: 1,
+    imageUrl: "https://recargasdiamante.site/assets/q4-sniper-B9XKu97q.jpg",
+  },
+  {
+    question: "¿Cuántos jugadores pueden estar en un squad en el modo clásico?",
+    options: ["2", "5", "3", "4"],
+    correctIndex: 3,
+    imageUrl: "https://recargasdiamante.site/assets/q5-squad-Ds7-7wwZ.jpg",
+  },
+  {
+    question: "¿Cuál es la función de las mascotas en Free Fire?",
+    options: ["Atacar enemigos", "Cargar objetos", "Solo decoración", "Proporcionar habilidades especiales"],
+    correctIndex: 3,
+    imageUrl: "https://recargasdiamante.site/assets/q6-pets-BCg-J60G.jpg",
+  },
+  {
+    question: "¿Cuál es el rango más alto en el modo clasificatorio de Free Fire?",
+    options: ["Heroico", "Diamante", "Gran Maestro", "Maestro"],
+    correctIndex: 0,
+    imageUrl: "https://recargasdiamante.site/assets/q7-ranks-DKFne6Xe.jpg",
+  },
+  {
+    question: "¿Qué vehículo es conocido como el más resistente en Free Fire?",
+    options: ["Monster Truck", "Moto", "Tuk Tuk", "Auto"],
+    correctIndex: 0,
+    imageUrl: "https://recargasdiamante.site/assets/q8-vehicles-D7j6gjaZ.jpg",
+  },
+  {
+    question: "¿Qué son las skins en Free Fire?",
+    options: ["Misiones", "Moneda del juego", "Personalizaciones visuales", "Armas especiales"],
+    correctIndex: 2,
+    imageUrl: "https://recargasdiamante.site/assets/q9-skins-D5xcCcXH.jpg",
+  },
+  {
+    question: "¿Qué encuentras en un airdrop en Free Fire?",
+    options: ["Comida", "Mascotas", "Vehículos", "Objetos raros y armas poderosas"],
+    correctIndex: 3,
+    imageUrl: "https://recargasdiamante.site/assets/q10-airdrop-CIi6E73x.jpg",
+  },
+];
+
+const Quiz: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getNavigationPath = (basePath: string) => {
+    return basePath + location.search;
+  };
+
+  const [started, setStarted] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  const totalQuestions = questions.length;
+  const progressPercent = Math.round(((currentQuestion + 1) / totalQuestions) * 100);
+
+  const handleSelectOption = (index: number) => {
+    if (!showFeedback) setSelectedOption(index);
+  };
+
+  const handleConfirm = () => {
+    if (selectedOption === null || showFeedback) {
+      return;
+    }
+
+    const current = questions[currentQuestion];
+    const isCorrect = selectedOption === current.correctIndex;
+
+    setShowFeedback(true);
+    if (isCorrect) {
+      setScore((prev) => prev + 1);
+    }
+
+    setTimeout(() => {
+      setShowFeedback(false);
+      setSelectedOption(null);
+
+      if (currentQuestion + 1 < totalQuestions) {
+        setCurrentQuestion((prev) => prev + 1);
+      } else {
+        setShowResult(true);
+      }
+    }, 900);
+  };
+
+  const handleRestart = () => {
+    setStarted(false);
+    setCurrentQuestion(0);
+    setSelectedOption(null);
+    setScore(0);
+    setShowResult(false);
+    setShowFeedback(false);
+  };
+
+  // Start Screen
+  if (!started) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
+          <div className="flex justify-center mb-4">
+            <img src={freefireLogo} alt="Free Fire" className="h-16" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground text-center mb-2">
+            Encuesta Free Fire
+          </h1>
+          <p className="text-muted-foreground text-center text-sm mb-6">
+            ¡Pon a prueba tus conocimientos y gana premios exclusivos de Diamantes!
+          </p>
+
+          <div className="info-box mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-2">
+              <span>🏅</span> Premio Increíble
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Acierta 70% o más de las preguntas y desbloquea hasta{" "}
+              <span className="text-primary font-bold">70% OFF</span> en paquetes de Diamantes.
+            </p>
+          </div>
+
+          <div className="info-box mb-6">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-2">
+              <span>🔹</span> Reglas del Quiz
+            </h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• 10 preguntas sobre Free Fire</li>
+              <li>• Elige una respuesta para cada pregunta</li>
+              <li>• Confirma tu respuesta para avanzar</li>
+              <li>• Necesitas al menos 7 respuestas correctas (70%) para ganar</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => setStarted(true)}
+            className="w-full py-3 rounded-xl font-semibold text-center btn-primary-gradient"
+          >
+            Comenzar Quiz 🔥
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Results Screen - Passed
+  if (showResult) {
+    const percent = Math.round((score / totalQuestions) * 100);
+    const passed = percent >= 70;
+
+    if (passed) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 text-center animate-fade-in">
+            <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">¡Felicidades! 🎉</h2>
+            <p className="text-muted-foreground mb-4">
+              ¡Acertaste {score} de {totalQuestions} preguntas!
+            </p>
+
+            <div className="bg-primary/10 rounded-xl p-4 mb-4">
+              <span className="text-2xl">✨</span>
+              <p className="text-3xl font-bold text-primary">70% OFF</p>
+              <p className="text-sm text-muted-foreground">¡en cualquier paquete de Diamantes!</p>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-6">
+              ¡Felicidades por haber acertado más del 70% de toda la encuesta! Esto demuestra que eres realmente
+              un súper jugador, por eso liberamos nuestros paquetes de Diamantes más vendidos con 70% de descuento.
+              ¡Garantiza ahora más de 5000 Diamantes prácticamente gratis!
+            </p>
+
+            <button
+              onClick={() => navigate(getNavigationPath("/identificar"))}
+              className="w-full mb-3 py-3 rounded-xl font-semibold btn-primary-gradient"
+            >
+              Reclamar Premio 💎
+            </button>
+
+            <button
+              onClick={handleRestart}
+              className="w-full py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
+            >
+              Volver al Inicio
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Results Screen - Failed
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 text-center animate-fade-in">
+          <div className="text-6xl mb-4">😔</div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">¡Casi lo logras!</h2>
+          <p className="text-muted-foreground mb-4">
+            Has acertado {score} de {totalQuestions} preguntas.
+          </p>
+
+          <div className="bg-muted rounded-xl p-4 mb-4">
+            <p className="text-3xl font-bold text-foreground">{percent}%</p>
+            <p className="text-sm text-muted-foreground">correcto</p>
+          </div>
+
+          <p className="text-sm text-muted-foreground mb-6">
+            Necesitas al menos 7 respuestas correctas para ganar el descuento.
+            ¡Inténtalo de nuevo!
+          </p>
+
+          <button
+            onClick={handleRestart}
+            className="w-full py-3 rounded-xl font-semibold btn-primary-gradient"
+          >
+            Intentar de Nuevo
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Question Screen
+  const q = questions[currentQuestion];
+  const letters = ["A", "B", "C", "D"];
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
+        {/* Progress */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+          <span>Pregunta {currentQuestion + 1} de {totalQuestions}</span>
+          <span>{progressPercent}%</span>
+        </div>
+        <div className="w-full h-2 bg-muted rounded-full mb-6 overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* Question Image */}
+        <div className="w-full h-40 rounded-xl overflow-hidden mb-4 bg-muted">
+          <img
+            src={q.imageUrl}
+            alt="Question illustration"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Question */}
+        <h2 className="text-lg font-semibold text-foreground mb-4">{q.question}</h2>
+
+        {/* Options */}
+        <div className="space-y-3 mb-6">
+          {q.options.map((opt, index) => {
+            let className = "quiz-option ";
+
+            if (!showFeedback && selectedOption === index) {
+              className += "quiz-option-selected";
+            } else if (!showFeedback) {
+              className += "quiz-option-default";
+            }
+
+            if (showFeedback) {
+              if (index === q.correctIndex) {
+                className += "quiz-option-correct";
+              } else if (selectedOption === index && index !== q.correctIndex) {
+                className += "quiz-option-incorrect";
+              } else {
+                className += "quiz-option-default";
+              }
+            }
+
+            return (
+              <button
+                key={index}
+                onClick={() => handleSelectOption(index)}
+                disabled={showFeedback}
+                className={className}
+              >
+                <span className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-semibold text-foreground">
+                  {letters[index]}
+                </span>
+                <span className="text-foreground">{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Confirm Button */}
+        <button
+          onClick={handleConfirm}
+          disabled={selectedOption === null || showFeedback}
+          className="w-full py-3 rounded-xl font-semibold btn-primary-gradient disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Confirmar Respuesta
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Quiz;
