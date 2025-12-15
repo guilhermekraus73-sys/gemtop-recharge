@@ -286,21 +286,21 @@ const Quiz: React.FC = () => {
         {/* Options */}
         <div className="space-y-3 mb-6">
           {q.options.map((opt, index) => {
-            let className = "quiz-option ";
+            let baseClass = "w-full flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 text-left ";
 
             if (!showFeedback && selectedOption === index) {
-              className += "quiz-option-selected";
+              baseClass += "border-primary bg-primary/5";
             } else if (!showFeedback) {
-              className += "quiz-option-default";
+              baseClass += "border-border bg-card hover:border-primary/50";
             }
 
             if (showFeedback) {
               if (index === q.correctIndex) {
-                className += "quiz-option-correct";
+                baseClass += "border-green-500 bg-green-50";
               } else if (selectedOption === index && index !== q.correctIndex) {
-                className += "quiz-option-incorrect";
+                baseClass += "border-red-500 bg-red-50";
               } else {
-                className += "quiz-option-default";
+                baseClass += "border-border bg-card";
               }
             }
 
@@ -309,11 +309,9 @@ const Quiz: React.FC = () => {
                 key={index}
                 onClick={() => handleSelectOption(index)}
                 disabled={showFeedback}
-                className={className}
+                className={baseClass}
               >
-                <span className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-semibold text-foreground">
-                  {letters[index]}
-                </span>
+                <span className="text-primary font-bold text-lg">{letters[index]}.</span>
                 <span className="text-foreground">{opt}</span>
               </button>
             );
@@ -324,9 +322,9 @@ const Quiz: React.FC = () => {
         <button
           onClick={handleConfirm}
           disabled={selectedOption === null || showFeedback}
-          className="w-full py-3 rounded-xl font-semibold btn-primary-gradient disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-xl font-semibold bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
         >
-          Confirmar Respuesta
+          Siguiente Pregunta
         </button>
       </div>
     </div>
