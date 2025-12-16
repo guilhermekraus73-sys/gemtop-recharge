@@ -20,10 +20,34 @@ const Checkout15: React.FC = () => {
   const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoadingIntent, setIsLoadingIntent] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isLoadingIntent, setIsLoadingIntent] = useState(true);
 
   const priceUsd = 15.90;
   const diamonds = 11200;
+
+  // Pre-create PaymentIntent on page load for faster checkout
+  useEffect(() => {
+    const createPaymentIntent = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+          body: { priceKey: '15', email: '', name: '' }
+        });
+
+        if (error) throw error;
+
+        if (data?.clientSecret) {
+          setClientSecret(data.clientSecret);
+        }
+      } catch (error: any) {
+        console.error('Error pre-creating payment intent:', error);
+      } finally {
+        setIsLoadingIntent(false);
+      }
+    };
+
+    createPaymentIntent();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -40,7 +64,7 @@ const Checkout15: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleCreatePaymentIntent = async () => {
+  const handleContinueToPayment = () => {
     if (!email || !confirmEmail || !fullName) {
       toast.error('Por favor, complete todos los campos');
       return;
@@ -51,26 +75,12 @@ const Checkout15: React.FC = () => {
       return;
     }
 
-    setIsLoadingIntent(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: { priceKey: '15', email, name: fullName }
-      });
-
-      if (error) throw error;
-
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-      } else {
-        throw new Error('No client secret returned');
-      }
-    } catch (error: any) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Error al preparar el pago. Intente nuevamente.');
-    } finally {
-      setIsLoadingIntent(false);
+    if (!clientSecret) {
+      toast.error('Cargando formulario de pago, intente nuevamente');
+      return;
     }
+
+    setShowPaymentForm(true);
   };
 
   const handlePaymentSuccess = () => {
@@ -134,7 +144,7 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
-                  disabled={!!clientSecret}
+                  disabled={showPaymentForm}
                 />
               </div>
 
@@ -147,7 +157,7 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setConfirmEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
-                  disabled={!!clientSecret}
+                  disabled={showPaymentForm}
                 />
               </div>
 
@@ -160,22 +170,22 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setFullName(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
-                  disabled={!!clientSecret}
+                  disabled={showPaymentForm}
                 />
               </div>
             </div>
 
             {/* Payment Section */}
-            {!clientSecret ? (
+            {!showPaymentForm ? (
               <button
-                onClick={handleCreatePaymentIntent}
+                onClick={handleContinueToPayment}
                 disabled={isLoadingIntent || !email || !confirmEmail || !fullName}
                 className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoadingIntent ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    Cargando...
+                    Preparando...
                   </>
                 ) : (
                   'Continuar al pago'
@@ -185,7 +195,7 @@ const Checkout15: React.FC = () => {
               <Elements 
                 stripe={stripePromise} 
                 options={{ 
-                  clientSecret,
+                  clientSecret: clientSecret!,
                   appearance: {
                     theme: 'stripe',
                     variables: {
