@@ -65,9 +65,37 @@ const Recharge: React.FC = () => {
       }
     });
 
-    const xcodValue = searchParams.get('xcod') || searchParams.get('src');
+    // Buscar xcod de múltiplas fontes: URL params, localStorage (UTMify), ou src param
+    let xcodValue = searchParams.get('xcod') || searchParams.get('src');
+    
+    // Tentar buscar do localStorage onde o UTMify armazena
+    if (!xcodValue) {
+      try {
+        const utmifyData = localStorage.getItem('utmify_data');
+        if (utmifyData) {
+          const parsed = JSON.parse(utmifyData);
+          xcodValue = parsed.xcod || parsed.src || parsed.leadId;
+        }
+      } catch (e) {
+        console.log('Could not read UTMify data from localStorage');
+      }
+    }
+
+    // Tentar buscar do cookie do UTMify
+    if (!xcodValue) {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'xcod' || name === 'utmify_xcod') {
+          xcodValue = value;
+          break;
+        }
+      }
+    }
+
     if (xcodValue) {
       url.searchParams.set('xcod', xcodValue);
+      url.searchParams.set('src', xcodValue); // Passar também como src para compatibilidade
     }
 
     console.log('Redirecting to Hotmart:', url.toString());
