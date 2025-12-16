@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
@@ -90,6 +90,14 @@ const Quiz: React.FC = () => {
   const totalQuestions = questions.length;
   const progressPercent = Math.round(((currentQuestion + 1) / totalQuestions) * 100);
 
+  // Preload all images on mount for instant transitions
+  useEffect(() => {
+    questions.forEach((q) => {
+      const img = new Image();
+      img.src = q.imageUrl;
+    });
+  }, []);
+
   const handleSelectOption = (index: number) => {
     if (!showFeedback) setSelectedOption(index);
   };
@@ -116,7 +124,7 @@ const Quiz: React.FC = () => {
       } else {
         setShowResult(true);
       }
-    }, 900);
+    }, 500);
   };
 
   const handleRestart = () => {
