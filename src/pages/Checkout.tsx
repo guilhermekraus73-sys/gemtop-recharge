@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import diamondHotmart from '@/assets/diamond-hotmart.jpg';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
@@ -118,11 +119,11 @@ const Checkout: React.FC = () => {
           <div className="bg-card rounded-2xl shadow-xl p-6 md:p-8">
             {/* Product Info */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-primary-foreground" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
+              <img 
+                src={diamondHotmart} 
+                alt="Diamantes Free Fire" 
+                className="w-16 h-16 rounded-xl object-cover"
+              />
               <div>
                 <h3 className="text-lg font-bold text-foreground">Paquete de Diamantes – Free Fire</h3>
                 <p className="text-muted-foreground">{selectedPackage.diamonds.toLocaleString()} + Bonus</p>
