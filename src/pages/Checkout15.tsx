@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Shield, Lock, CreditCard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import StripePaymentForm from '@/components/StripePaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
+const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
+
 const Checkout15: React.FC = () => {
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isLoadingIntent, setIsLoadingIntent] = useState(false);
 
   const priceUsd = 15.90;
   const diamonds = 11200;
@@ -33,33 +40,41 @@ const Checkout15: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (email !== confirmEmail) {
-      toast.error('Os emails não coincidem. Verifique e tente novamente.');
+  const handleCreatePaymentIntent = async () => {
+    if (!email || !confirmEmail || !fullName) {
+      toast.error('Por favor, complete todos los campos');
       return;
     }
-    
-    setIsProcessing(true);
+
+    if (email !== confirmEmail) {
+      toast.error('Los emails no coinciden');
+      return;
+    }
+
+    setIsLoadingIntent(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: { priceKey: '15', email, name: fullName }
       });
 
       if (error) throw error;
 
-      if (data?.url) {
-        window.location.href = data.url;
+      if (data?.clientSecret) {
+        setClientSecret(data.clientSecret);
       } else {
-        throw new Error('No checkout URL returned');
+        throw new Error('No client secret returned');
       }
     } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error('Error al procesar el pago. Intente nuevamente.');
-      setIsProcessing(false);
+      console.error('Error creating payment intent:', error);
+      toast.error('Error al preparar el pago. Intente nuevamente.');
+    } finally {
+      setIsLoadingIntent(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    navigate('/obrigado');
   };
 
   return (
@@ -108,8 +123,8 @@ const Checkout15: React.FC = () => {
               </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Customer Info Form */}
+            <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-foreground font-medium mb-2">Seu email</label>
                 <Input
@@ -119,6 +134,7 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
+                  disabled={!!clientSecret}
                 />
               </div>
 
@@ -131,6 +147,7 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setConfirmEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
+                  disabled={!!clientSecret}
                 />
               </div>
 
@@ -143,45 +160,43 @@ const Checkout15: React.FC = () => {
                   onChange={(e) => setFullName(e.target.value)}
                   className="h-12 bg-muted border-border"
                   required
+                  disabled={!!clientSecret}
                 />
               </div>
+            </div>
 
-              {/* Payment Info */}
-              <div className="bg-muted rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2 text-foreground">
-                  <CreditCard className="w-5 h-5" />
-                  <span className="font-medium">Pago seguro con Stripe</span>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  Serás redirigido a la página de pago seguro de Stripe para completar tu compra.
-                </p>
-              </div>
-
-              {/* Security Notice */}
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Shield className="w-4 h-4" />
-                <span>Pago 100% seguro con encriptación SSL</span>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isProcessing}
-                className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
+            {/* Payment Section */}
+            {!clientSecret ? (
+              <button
+                onClick={handleCreatePaymentIntent}
+                disabled={isLoadingIntent || !email || !confirmEmail || !fullName}
+                className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessing ? (
+                {isLoadingIntent ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    Redirigiendo...
+                    Cargando...
                   </>
                 ) : (
-                  <>
-                    <Lock className="w-5 h-5" />
-                    PAGAR ${priceUsd.toFixed(2)} USD
-                  </>
+                  'Continuar al pago'
                 )}
-              </Button>
-            </form>
+              </button>
+            ) : (
+              <Elements 
+                stripe={stripePromise} 
+                options={{ 
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#ef4444',
+                    },
+                  },
+                }}
+              >
+                <StripePaymentForm amount={priceUsd} onSuccess={handlePaymentSuccess} />
+              </Elements>
+            )}
           </div>
         </div>
       </div>
