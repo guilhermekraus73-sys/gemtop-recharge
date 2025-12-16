@@ -36,13 +36,11 @@ serve(async (req) => {
 
     console.log("[CREATE-PAYMENT-INTENT] Creating payment intent for amount:", priceData.amount);
 
-    // Create a PaymentIntent
+    // Create a PaymentIntent with specific payment methods (no Link)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: priceData.amount,
       currency: "usd",
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
       metadata: {
         customer_name: name || '',
         customer_email: email || '',
