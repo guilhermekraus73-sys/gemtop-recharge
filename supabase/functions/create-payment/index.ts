@@ -20,9 +20,9 @@ serve(async (req) => {
   }
 
   try {
-    const { priceKey, email } = await req.json();
+    const { priceKey, email, name } = await req.json();
     
-    console.log("[CREATE-PAYMENT] Request received", { priceKey, email });
+    console.log("[CREATE-PAYMENT] Request received", { priceKey, email, name });
 
     const priceId = PRICES[priceKey];
     if (!priceId) {
@@ -48,6 +48,10 @@ serve(async (req) => {
       mode: "payment",
       success_url: `${req.headers.get("origin")}/obrigado`,
       cancel_url: `${req.headers.get("origin")}/checkout${priceKey}`,
+      metadata: {
+        customer_name: name || '',
+        customer_email: email || '',
+      },
     });
 
     console.log("[CREATE-PAYMENT] Session created:", session.id);

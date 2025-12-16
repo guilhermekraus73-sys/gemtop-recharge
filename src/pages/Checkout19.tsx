@@ -11,6 +11,8 @@ const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banne
 const Checkout19: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const priceUsd = 19.00;
@@ -33,11 +35,17 @@ const Checkout19: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (email !== confirmEmail) {
+      toast.error('Os emails não coincidem. Verifique e tente novamente.');
+      return;
+    }
+    
     setIsProcessing(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: { priceKey: '19', email }
+        body: { priceKey: '19', email, name: fullName }
       });
 
       if (error) throw error;
@@ -103,12 +111,38 @@ const Checkout19: React.FC = () => {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
+                <label className="block text-foreground font-medium mb-2">Seu email</label>
                 <Input
                   type="email"
-                  placeholder="Email (opcional)"
+                  placeholder="Digite seu email para receber a compra"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-medium mb-2">Confirme seu email</label>
+                <Input
+                  type="email"
+                  placeholder="Digite novamente seu email"
+                  value={confirmEmail}
+                  onChange={(e) => setConfirmEmail(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-foreground font-medium mb-2">Nome completo</label>
+                <Input
+                  type="text"
+                  placeholder="Digite seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
                 />
               </div>
 
