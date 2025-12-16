@@ -56,9 +56,25 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Hide Link banner via CSS */}
+      <style>{`
+        .p-LinkAutofillPrompt,
+        [data-testid="link-autofill-prompt"],
+        .LinkAutofillPrompt,
+        .p-LinkAuthenticationElement,
+        [class*="LinkAutofill"],
+        [class*="link-autofill"] {
+          display: none !important;
+        }
+      `}</style>
       <PaymentElement 
         options={{
           layout: 'tabs',
+          wallets: {
+            applePay: 'auto',
+            googlePay: 'auto',
+          },
+          paymentMethodOrder: ['card', 'apple_pay', 'google_pay'],
         }}
       />
 
