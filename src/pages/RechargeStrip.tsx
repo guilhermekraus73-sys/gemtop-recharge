@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
@@ -11,13 +11,13 @@ type Package = {
   diamonds: number;
   price: number;
   bonus: number;
-  paymentUrl: string;
+  checkoutRoute: string;
 };
 
 const packages: Package[] = [
-  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=t7i2knq0&checkoutMode=10" },
-  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=i80kzx2g&checkoutMode=10" },
-  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=g1edxca2&checkoutMode=10" },
+  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, checkoutRoute: "/checkout9" },
+  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, checkoutRoute: "/checkout15" },
+  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, checkoutRoute: "/checkout19" },
 ];
 
 const paymentMethods = [
@@ -41,6 +41,7 @@ const RechargeStrip: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [selectedPayment, setSelectedPayment] = useState("credit");
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const handleContinue = () => {
     if (!selectedPackage) {
@@ -55,51 +56,9 @@ const RechargeStrip: React.FC = () => {
     const pkg = packages.find(p => p.id === selectedPackage);
     if (!pkg) return;
 
-    const url = new URL(pkg.paymentUrl);
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'sck'];
-
-    utmKeys.forEach(key => {
-      const value = searchParams.get(key);
-      if (value) {
-        url.searchParams.set(key, value);
-      }
-    });
-
-    // Buscar xcod de múltiplas fontes: URL params, localStorage (UTMify), ou src param
-    let xcodValue = searchParams.get('xcod') || searchParams.get('src');
-    
-    // Tentar buscar do localStorage onde o UTMify armazena
-    if (!xcodValue) {
-      try {
-        const utmifyData = localStorage.getItem('utmify_data');
-        if (utmifyData) {
-          const parsed = JSON.parse(utmifyData);
-          xcodValue = parsed.xcod || parsed.src || parsed.leadId;
-        }
-      } catch (e) {
-        console.log('Could not read UTMify data from localStorage');
-      }
-    }
-
-    // Tentar buscar do cookie do UTMify
-    if (!xcodValue) {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'xcod' || name === 'utmify_xcod') {
-          xcodValue = value;
-          break;
-        }
-      }
-    }
-
-    if (xcodValue) {
-      url.searchParams.set('xcod', xcodValue);
-      url.searchParams.set('src', xcodValue);
-    }
-
-    console.log('Redirecting to Hotmart:', url.toString());
-    window.location.href = url.toString();
+    // Navegar para o checkout interno com parâmetros UTM
+    const utmParams = searchParams.toString();
+    navigate(pkg.checkoutRoute + (utmParams ? '?' + utmParams : ''));
   };
 
   const selectedPack = packages.find((p) => p.id === selectedPackage);
