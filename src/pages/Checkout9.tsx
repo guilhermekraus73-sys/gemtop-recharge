@@ -1,26 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Clock, Shield, Lock } from 'lucide-react';
+import { Clock, Shield, Lock, CreditCard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import diamondBonus from '@/assets/diamond-bonus.png';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
 const Checkout9: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryMonth, setExpiryMonth] = useState('');
-  const [expiryYear, setExpiryYear] = useState('');
-  const [cvv, setCvv] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const priceUsd = 9.00;
@@ -41,36 +31,28 @@ const Checkout9: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    return parts.length ? parts.join(' ') : value;
-  };
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCardNumber(e.target.value);
-    if (formatted.length <= 19) {
-      setCardNumber(formatted);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert('Este é apenas um preview do checkout. A integração real será implementada após aprovação.');
-    }, 2000);
-  };
 
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 15 }, (_, i) => String(currentYear + i));
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: { priceKey: '9', email }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error('Error al procesar el pago. Intente nuevamente.');
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,93 +104,29 @@ const Checkout9: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Input
-                  type="text"
-                  placeholder="Full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-12 bg-muted border-border"
-                  required
-                />
-              </div>
-
-              <div>
-                <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email (opcional)"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
-                  required
                 />
               </div>
 
-              {/* Payment Method Selector */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-border bg-card text-foreground font-medium"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  Card
-                </button>
-              </div>
-
-              {/* Card Details */}
-              <div className="bg-muted rounded-xl p-4 space-y-4">
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="Credit card number"
-                    value={cardNumber}
-                    onChange={handleCardNumberChange}
-                    className="h-12 bg-card border-border"
-                    required
-                  />
+              {/* Payment Info */}
+              <div className="bg-muted rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-foreground">
+                  <CreditCard className="w-5 h-5" />
+                  <span className="font-medium">Pago seguro con Stripe</span>
                 </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <Select value={expiryMonth} onValueChange={setExpiryMonth}>
-                    <SelectTrigger className="h-12 bg-card border-border">
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((month) => (
-                        <SelectItem key={month} value={month}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={expiryYear} onValueChange={setExpiryYear}>
-                    <SelectTrigger className="h-12 bg-card border-border">
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Input
-                    type="text"
-                    placeholder="CVV"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="h-12 bg-card border-border"
-                    maxLength={4}
-                    required
-                  />
-                </div>
+                <p className="text-muted-foreground text-sm">
+                  Serás redirigido a la página de pago seguro de Stripe para completar tu compra.
+                </p>
               </div>
 
               {/* Security Notice */}
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Shield className="w-4 h-4" />
-                <span>We protect your payment data with encryption to ensure bank-level security.</span>
+                <span>Pago 100% seguro con encriptación SSL</span>
               </div>
 
               {/* Submit Button */}
@@ -220,12 +138,12 @@ const Checkout9: React.FC = () => {
                 {isProcessing ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    Procesando...
+                    Redirigiendo...
                   </>
                 ) : (
                   <>
                     <Lock className="w-5 h-5" />
-                    PAY (${priceUsd.toFixed(2)})
+                    PAGAR ${priceUsd.toFixed(2)} USD
                   </>
                 )}
               </Button>
