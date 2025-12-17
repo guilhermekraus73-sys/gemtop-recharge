@@ -14,6 +14,15 @@ interface UTMifySaleRequest {
   productName: string;
   leadId?: string;
   sourceUrl?: string;
+  trackingParams?: {
+    src?: string;
+    sck?: string;
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    utm_term?: string;
+  };
 }
 
 serve(async (req) => {
@@ -29,9 +38,9 @@ serve(async (req) => {
     }
 
     const body: UTMifySaleRequest = await req.json();
-    const { orderId, email, name, value, currency, productName, leadId, sourceUrl } = body;
+    const { orderId, email, name, value, currency, productName, leadId, sourceUrl, trackingParams } = body;
 
-    console.log("[REGISTER-UTMIFY-SALE] Request received", { orderId, email, value, productName });
+    console.log("[REGISTER-UTMIFY-SALE] Request received", { orderId, email, value, productName, trackingParams });
 
     // Build UTMify API payload
     const utmifyPayload = {
@@ -59,13 +68,13 @@ serve(async (req) => {
         },
       ],
       trackingParameters: {
-        src: leadId || "",
-        sck: "",
-        utm_source: "",
-        utm_medium: "",
-        utm_campaign: "",
-        utm_content: "",
-        utm_term: "",
+        src: trackingParams?.src || leadId || "",
+        sck: trackingParams?.sck || "",
+        utm_source: trackingParams?.utm_source || "",
+        utm_medium: trackingParams?.utm_medium || "",
+        utm_campaign: trackingParams?.utm_campaign || "",
+        utm_content: trackingParams?.utm_content || "",
+        utm_term: trackingParams?.utm_term || "",
       },
       commission: {
         totalPriceInCents: Math.round(value * 100),
