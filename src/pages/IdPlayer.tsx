@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
 const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
@@ -10,6 +11,7 @@ const IdPlayer: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  useUtmifyStripePixel();
 
   const handleValidate = () => {
     if (!playerId.trim()) {

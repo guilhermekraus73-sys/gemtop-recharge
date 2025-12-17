@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
 const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
@@ -42,6 +43,7 @@ const RechargeStrip: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState("credit");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  useUtmifyStripePixel();
 
   const handleContinue = () => {
     if (!selectedPackage) {
