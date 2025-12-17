@@ -7,16 +7,71 @@ import {
 import { Button } from '@/components/ui/button';
 import { Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StripePaymentFormProps {
   amount: number;
   onSuccess: () => void;
+  productName?: string;
+  customerEmail?: string;
+  customerName?: string;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess }) => {
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ 
+  amount, 
+  onSuccess, 
+  productName = 'Diamantes Free Fire',
+  customerEmail = '',
+  customerName = ''
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Get UTMify leadId from localStorage
+  const getUtmifyLeadId = (): string => {
+    try {
+      const utmifyData = localStorage.getItem('utmify_lead');
+      if (utmifyData) {
+        const parsed = JSON.parse(utmifyData);
+        return parsed._id || parsed.leadId || '';
+      }
+      // Try alternative storage key
+      const pixelData = localStorage.getItem('utmify_pixel_data');
+      if (pixelData) {
+        const parsed = JSON.parse(pixelData);
+        return parsed._id || parsed.leadId || '';
+      }
+    } catch (e) {
+      console.log('Could not read UTMify leadId from localStorage');
+    }
+    return '';
+  };
+
+  const registerUtmifySale = async (paymentIntentId: string) => {
+    try {
+      const leadId = getUtmifyLeadId();
+      console.log('[UTMIFY] Registering sale', { paymentIntentId, leadId, amount });
+
+      await supabase.functions.invoke('register-utmify-sale', {
+        body: {
+          orderId: paymentIntentId,
+          email: customerEmail,
+          name: customerName,
+          value: amount,
+          currency: 'USD',
+          productName,
+          leadId,
+          sourceUrl: window.location.href,
+        }
+      });
+      
+      console.log('[UTMIFY] Sale registered successfully');
+    } catch (error) {
+      console.error('[UTMIFY] Error registering sale:', error);
+      // Don't throw - UTMify issues shouldn't affect user experience
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +99,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
         }
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Register sale with UTMify before redirecting
+        await registerUtmifySale(paymentIntent.id);
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       }

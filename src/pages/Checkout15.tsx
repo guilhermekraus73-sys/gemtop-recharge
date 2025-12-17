@@ -204,7 +204,13 @@ const Checkout15: React.FC = () => {
                   },
                 }}
               >
-                <StripePaymentForm amount={priceUsd} onSuccess={handlePaymentSuccess} />
+                <StripePaymentForm 
+                  amount={priceUsd} 
+                  onSuccess={handlePaymentSuccess}
+                  productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                  customerEmail={email}
+                  customerName={fullName}
+                />
               </Elements>
             )}
           </div>
