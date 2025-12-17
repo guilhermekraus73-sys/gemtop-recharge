@@ -48,10 +48,39 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     return '';
   };
 
+  // Get UTM parameters from URL or localStorage
+  const getUtmParams = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Try to get from URL first, then localStorage
+    const getParam = (key: string): string => {
+      const urlValue = urlParams.get(key);
+      if (urlValue) return urlValue;
+      
+      try {
+        const stored = localStorage.getItem(`utm_${key}`) || localStorage.getItem(key);
+        return stored || '';
+      } catch {
+        return '';
+      }
+    };
+
+    return {
+      src: getParam('src') || getUtmifyLeadId(),
+      sck: getParam('sck'),
+      utm_source: getParam('utm_source'),
+      utm_medium: getParam('utm_medium'),
+      utm_campaign: getParam('utm_campaign'),
+      utm_content: getParam('utm_content'),
+      utm_term: getParam('utm_term'),
+    };
+  };
+
   const registerUtmifySale = async (paymentIntentId: string) => {
     try {
       const leadId = getUtmifyLeadId();
-      console.log('[UTMIFY] Registering sale', { paymentIntentId, leadId, amount });
+      const trackingParams = getUtmParams();
+      console.log('[UTMIFY] Registering sale', { paymentIntentId, leadId, trackingParams, amount });
 
       await supabase.functions.invoke('register-utmify-sale', {
         body: {
@@ -63,6 +92,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
           productName,
           leadId,
           sourceUrl: window.location.href,
+          trackingParams,
         }
       });
       
