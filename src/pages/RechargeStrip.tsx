@@ -126,11 +126,11 @@ const RechargeStrip: React.FC = () => {
             {packages.map((pkg) => (
               <button
                 key={pkg.id}
-                onClick={() => {
-                  const utmParams = searchParams.toString();
-                  navigate(pkg.checkoutRoute + (utmParams ? '?' + utmParams : ''));
-                }}
-                className="package-card text-center text-sm"
+                onClick={() => setSelectedPackage(pkg.id)}
+                className={
+                  "package-card text-center text-sm " +
+                  (selectedPackage === pkg.id ? "selected" : "")
+                }
               >
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <img src={diamondIcon} alt="Diamond" className="w-5 h-5" />
