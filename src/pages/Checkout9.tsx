@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StripePaymentForm from '@/components/StripePaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
+import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
@@ -22,6 +23,7 @@ const Checkout9: React.FC = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isLoadingIntent, setIsLoadingIntent] = useState(true);
+  useUtmifyStripePixel();
 
   const priceUsd = 9.00;
   const diamonds = 5600;

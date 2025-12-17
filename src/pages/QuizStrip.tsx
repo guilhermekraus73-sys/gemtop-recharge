@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 type Question = {
@@ -75,6 +76,7 @@ const questions: Question[] = [
 const QuizStrip: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useUtmifyStripePixel();
 
   const getNavigationPath = (basePath: string) => {
     return basePath + location.search;
