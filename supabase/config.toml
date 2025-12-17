@@ -1,1 +1,10 @@
 project_id = "wzalbseskuzaieeogomm"
+
+[functions.create-payment-intent]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.register-utmify-sale]
+verify_jwt = false
