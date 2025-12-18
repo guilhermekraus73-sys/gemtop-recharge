@@ -4,9 +4,8 @@ import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import StripePaymentForm from '@/components/StripePaymentForm';
+import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
@@ -20,9 +19,7 @@ const Checkout9: React.FC = () => {
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [isLoadingIntent, setIsLoadingIntent] = useState(false);
   useUtmifyStripePixel();
 
   const priceUsd = 9.00;
@@ -43,7 +40,7 @@ const Checkout9: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleContinueToPayment = async () => {
+  const handleContinueToPayment = () => {
     if (!email || !confirmEmail || !fullName) {
       toast.error('Por favor, complete todos los campos');
       return;
@@ -54,25 +51,7 @@ const Checkout9: React.FC = () => {
       return;
     }
 
-    // Create PaymentIntent only when user is ready to pay
-    setIsLoadingIntent(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: { priceKey: '9', email, name: fullName }
-      });
-
-      if (error) throw error;
-
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-        setShowPaymentForm(true);
-      }
-    } catch (error: any) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Error al preparar el pago. Intente nuevamente.');
-    } finally {
-      setIsLoadingIntent(false);
-    }
+    setShowPaymentForm(true);
   };
 
   const handlePaymentSuccess = () => {
@@ -171,23 +150,15 @@ const Checkout9: React.FC = () => {
             {!showPaymentForm ? (
               <button
                 onClick={handleContinueToPayment}
-                disabled={isLoadingIntent || !email || !confirmEmail || !fullName}
+                disabled={!email || !confirmEmail || !fullName}
                 className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoadingIntent ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    Preparando...
-                  </>
-                ) : (
-                  'Continuar al pago'
-                )}
+                Continuar al pago
               </button>
             ) : (
               <Elements 
                 stripe={stripePromise} 
-                options={{ 
-                  clientSecret: clientSecret!,
+                options={{
                   appearance: {
                     theme: 'stripe',
                     variables: {
@@ -196,8 +167,9 @@ const Checkout9: React.FC = () => {
                   },
                 }}
               >
-                <StripePaymentForm 
-                  amount={priceUsd} 
+                <StripeCardPaymentForm 
+                  amount={priceUsd}
+                  priceKey="9"
                   onSuccess={handlePaymentSuccess}
                   productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
                   customerEmail={email}
