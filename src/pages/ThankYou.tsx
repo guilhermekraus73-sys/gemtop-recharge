@@ -1,8 +1,70 @@
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle, Diamond, Gift, Clock, AlertTriangle, Sparkles, BookOpen } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
 const ThankYou = () => {
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const registerUtmifySale = async () => {
+      // Check if we came from a Stripe payment (Stripe adds payment_intent to URL)
+      const paymentIntentId = searchParams.get('payment_intent');
+      const paymentStatus = searchParams.get('redirect_status');
+      
+      if (!paymentIntentId || paymentStatus !== 'succeeded') {
+        console.log('[UTMIFY] Not a Stripe redirect or payment not succeeded');
+        return;
+      }
+
+      // Check if we already registered this payment
+      const registeredKey = `utmify_registered_${paymentIntentId}`;
+      if (localStorage.getItem(registeredKey)) {
+        console.log('[UTMIFY] Sale already registered for this payment');
+        return;
+      }
+
+      // Get stored payment data
+      const storedData = localStorage.getItem('stripe_payment_pending');
+      if (!storedData) {
+        console.log('[UTMIFY] No stored payment data found');
+        return;
+      }
+
+      try {
+        const paymentData = JSON.parse(storedData);
+        console.log('[UTMIFY] Registering sale from thank you page', { paymentIntentId, paymentData });
+
+        const response = await supabase.functions.invoke('register-utmify-sale', {
+          body: {
+            orderId: paymentIntentId,
+            email: paymentData.email,
+            name: paymentData.name,
+            value: paymentData.value,
+            currency: 'USD',
+            productName: paymentData.productName,
+            leadId: paymentData.leadId,
+            sourceUrl: paymentData.sourceUrl,
+            trackingParams: paymentData.trackingParams,
+          }
+        });
+
+        console.log('[UTMIFY] Sale registration response', response);
+        
+        // Mark as registered and clean up
+        localStorage.setItem(registeredKey, 'true');
+        localStorage.removeItem('stripe_payment_pending');
+        console.log('[UTMIFY] Sale registered successfully from thank you page');
+      } catch (error) {
+        console.error('[UTMIFY] Error registering sale from thank you page:', error);
+      }
+    };
+
+    registerUtmifySale();
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <main className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
