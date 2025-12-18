@@ -129,37 +129,41 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     }
   };
 
-  // Initialize Payment Request (Apple Pay / Google Pay)
+  // Initialize Payment Request (Apple Pay / Google Pay) - Run ASAP when stripe loads
   useEffect(() => {
-    if (!stripe) return;
+    if (!stripe || paymentRequest) return;
 
     const pr = stripe.paymentRequest({
       country: 'US',
       currency: 'usd',
       total: {
         label: productName,
-        amount: Math.round(amount * 100), // Convert to cents
+        amount: Math.round(amount * 100),
       },
       requestPayerName: true,
       requestPayerEmail: true,
     });
 
+    // Check immediately without waiting
     pr.canMakePayment().then(result => {
       if (result) {
         console.log('[PAYMENT] Apple Pay / Google Pay available:', result);
         setPaymentRequest(pr);
         setCanMakePayment(true);
-      } else {
-        console.log('[PAYMENT] Apple Pay / Google Pay not available');
       }
     });
 
-    // Handle payment method from Apple Pay / Google Pay
-    pr.on('paymentmethod', async (ev) => {
+    setPaymentRequest(pr); // Set immediately so button can render when ready
+  }, [stripe]); // Only depend on stripe to run ASAP
+
+  // Handle wallet payment events separately
+  useEffect(() => {
+    if (!paymentRequest || !stripe) return;
+
+    const handlePaymentMethod = async (ev: any) => {
       console.log('[PAYMENT] PaymentMethod from wallet:', ev.paymentMethod.id);
       
       try {
-        // Call edge function to create and confirm payment
         const { data, error } = await supabase.functions.invoke('process-card-payment', {
           body: {
             paymentMethodId: ev.paymentMethod.id,
@@ -172,7 +176,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         if (error) throw error;
 
         if (data.requires_action && data.client_secret) {
-          // Handle 3D Secure
           const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
           
           if (confirmError) {
@@ -201,9 +204,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         ev.complete('fail');
         toast.error('Error al procesar el pago');
       }
-    });
+    };
 
-  }, [stripe, amount, priceKey, customerEmail, customerName, productName]);
+    paymentRequest.on('paymentmethod', handlePaymentMethod);
+    
+    return () => {
+      paymentRequest.off('paymentmethod', handlePaymentMethod);
+    };
+  }, [paymentRequest, stripe, priceKey, customerEmail, customerName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
