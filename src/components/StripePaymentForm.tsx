@@ -112,6 +112,21 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
 
     setIsProcessing(true);
 
+    // Store payment info for UTMify registration on thank you page (in case of redirect)
+    const trackingParams = getUtmParams();
+    const paymentData = {
+      email: customerEmail,
+      name: customerName,
+      value: amount,
+      productName,
+      trackingParams,
+      leadId: getUtmifyLeadId(),
+      sourceUrl: window.location.href,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('stripe_payment_pending', JSON.stringify(paymentData));
+    console.log('[UTMIFY] Stored payment data for thank you page', paymentData);
+
     try {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
@@ -127,16 +142,19 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         } else {
           toast.error('Ocurrió un error inesperado');
         }
+        localStorage.removeItem('stripe_payment_pending');
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Register sale with UTMify before redirecting
         await registerUtmifySale(paymentIntent.id);
+        localStorage.removeItem('stripe_payment_pending');
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       }
     } catch (err) {
       console.error('Payment error:', err);
       toast.error('Error al procesar el pago');
+      localStorage.removeItem('stripe_payment_pending');
       setIsProcessing(false);
     }
   };
