@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
-import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
+import StripePaymentForm from '@/components/StripePaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
+import { supabase } from '@/integrations/supabase/client';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
@@ -19,7 +20,8 @@ const Checkout19: React.FC = () => {
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   useUtmifyStripePixel();
 
   const priceUsd = 19.00;
@@ -40,7 +42,7 @@ const Checkout19: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     if (!email || !confirmEmail || !fullName) {
       toast.error('Por favor, complete todos los campos');
       return;
@@ -51,7 +53,31 @@ const Checkout19: React.FC = () => {
       return;
     }
 
-    setShowPaymentForm(true);
+    setIsLoadingPayment(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: priceUsd,
+          currency: 'usd',
+          customerEmail: email,
+          customerName: fullName,
+          productName: `${diamonds.toLocaleString()} Diamantes Free Fire`,
+        }
+      });
+
+      if (error) throw error;
+      if (data?.clientSecret) {
+        setClientSecret(data.clientSecret);
+      } else {
+        throw new Error('No se pudo crear la sesión de pago');
+      }
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      toast.error('Error al preparar el pago. Intente nuevamente.');
+    } finally {
+      setIsLoadingPayment(false);
+    }
   };
 
   const handlePaymentSuccess = () => {
@@ -105,60 +131,67 @@ const Checkout19: React.FC = () => {
             </div>
 
             {/* Customer Info Form */}
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-foreground font-medium mb-2">Seu email</label>
-                <Input
-                  type="email"
-                  placeholder="Digite seu email para receber a compra"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 bg-muted border-border"
-                  required
-                  disabled={showPaymentForm}
-                />
-              </div>
+            {!clientSecret && (
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-foreground font-medium mb-2">Seu email</label>
+                  <Input
+                    type="email"
+                    placeholder="Digite seu email para receber a compra"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 bg-muted border-border"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-foreground font-medium mb-2">Confirme seu email</label>
-                <Input
-                  type="email"
-                  placeholder="Digite novamente seu email"
-                  value={confirmEmail}
-                  onChange={(e) => setConfirmEmail(e.target.value)}
-                  className="h-12 bg-muted border-border"
-                  required
-                  disabled={showPaymentForm}
-                />
-              </div>
+                <div>
+                  <label className="block text-foreground font-medium mb-2">Confirme seu email</label>
+                  <Input
+                    type="email"
+                    placeholder="Digite novamente seu email"
+                    value={confirmEmail}
+                    onChange={(e) => setConfirmEmail(e.target.value)}
+                    className="h-12 bg-muted border-border"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-foreground font-medium mb-2">Nome completo</label>
-                <Input
-                  type="text"
-                  placeholder="Digite seu nome completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-12 bg-muted border-border"
-                  required
-                  disabled={showPaymentForm}
-                />
+                <div>
+                  <label className="block text-foreground font-medium mb-2">Nome completo</label>
+                  <Input
+                    type="text"
+                    placeholder="Digite seu nome completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="h-12 bg-muted border-border"
+                    required
+                  />
+                </div>
+
+                <button
+                  onClick={handleContinueToPayment}
+                  disabled={!email || !confirmEmail || !fullName || isLoadingPayment}
+                  className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingPayment ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      Preparando pago...
+                    </>
+                  ) : (
+                    'Continuar al pago'
+                  )}
+                </button>
               </div>
-            </div>
+            )}
 
             {/* Payment Section */}
-            {!showPaymentForm ? (
-              <button
-                onClick={handleContinueToPayment}
-                disabled={!email || !confirmEmail || !fullName}
-                className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continuar al pago
-              </button>
-            ) : (
+            {clientSecret && (
               <Elements 
                 stripe={stripePromise} 
                 options={{
+                  clientSecret,
                   appearance: {
                     theme: 'stripe',
                     variables: {
@@ -167,9 +200,8 @@ const Checkout19: React.FC = () => {
                   },
                 }}
               >
-                <StripeCardPaymentForm 
+                <StripePaymentForm 
                   amount={priceUsd}
-                  priceKey="19"
                   onSuccess={handlePaymentSuccess}
                   productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
                   customerEmail={email}
