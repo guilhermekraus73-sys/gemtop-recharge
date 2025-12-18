@@ -85,13 +85,14 @@ serve(async (req) => {
       isTest: false,
     };
 
-    console.log("[REGISTER-UTMIFY-SALE] Sending to UTMify API", { orderId });
+    console.log("[REGISTER-UTMIFY-SALE] Sending to UTMify API", { orderId, apiToken: apiToken ? "***" + apiToken.slice(-4) : "MISSING" });
 
-    // Send to UTMify API
+    // Send to UTMify API - try multiple auth methods
     const utmifyResponse = await fetch("https://api.utmify.com.br/api/v1/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiToken}`,
         "x-api-token": apiToken,
       },
       body: JSON.stringify(utmifyPayload),
