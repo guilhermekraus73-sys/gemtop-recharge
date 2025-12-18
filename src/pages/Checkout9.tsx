@@ -22,34 +22,11 @@ const Checkout9: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [isLoadingIntent, setIsLoadingIntent] = useState(true);
+  const [isLoadingIntent, setIsLoadingIntent] = useState(false);
   useUtmifyStripePixel();
 
   const priceUsd = 9.00;
   const diamonds = 5600;
-
-  // Pre-create PaymentIntent on page load for faster checkout
-  useEffect(() => {
-    const createPaymentIntent = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-          body: { priceKey: '9', email: '', name: '' }
-        });
-
-        if (error) throw error;
-
-        if (data?.clientSecret) {
-          setClientSecret(data.clientSecret);
-        }
-      } catch (error: any) {
-        console.error('Error pre-creating payment intent:', error);
-      } finally {
-        setIsLoadingIntent(false);
-      }
-    };
-
-    createPaymentIntent();
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -66,7 +43,7 @@ const Checkout9: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     if (!email || !confirmEmail || !fullName) {
       toast.error('Por favor, complete todos los campos');
       return;
@@ -77,12 +54,25 @@ const Checkout9: React.FC = () => {
       return;
     }
 
-    if (!clientSecret) {
-      toast.error('Cargando formulario de pago, intente nuevamente');
-      return;
-    }
+    // Create PaymentIntent only when user is ready to pay
+    setIsLoadingIntent(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: { priceKey: '9', email, name: fullName }
+      });
 
-    setShowPaymentForm(true);
+      if (error) throw error;
+
+      if (data?.clientSecret) {
+        setClientSecret(data.clientSecret);
+        setShowPaymentForm(true);
+      }
+    } catch (error: any) {
+      console.error('Error creating payment intent:', error);
+      toast.error('Error al preparar el pago. Intente nuevamente.');
+    } finally {
+      setIsLoadingIntent(false);
+    }
   };
 
   const handlePaymentSuccess = () => {
