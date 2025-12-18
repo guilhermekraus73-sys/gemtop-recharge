@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CardNumberElement,
   CardExpiryElement,
   CardCvcElement,
   useStripe,
   useElements,
+  PaymentRequestButtonElement,
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import type { PaymentRequest } from '@stripe/stripe-js';
 
 interface StripeCardPaymentFormProps {
   priceKey: string;
@@ -50,6 +52,8 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
+  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [canMakePayment, setCanMakePayment] = useState(false);
 
   const isFormComplete = cardholderName && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
 
@@ -124,6 +128,82 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       console.error('[UTMIFY] Error registering sale:', error);
     }
   };
+
+  // Initialize Payment Request (Apple Pay / Google Pay)
+  useEffect(() => {
+    if (!stripe) return;
+
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: 'usd',
+      total: {
+        label: productName,
+        amount: Math.round(amount * 100), // Convert to cents
+      },
+      requestPayerName: true,
+      requestPayerEmail: true,
+    });
+
+    pr.canMakePayment().then(result => {
+      if (result) {
+        console.log('[PAYMENT] Apple Pay / Google Pay available:', result);
+        setPaymentRequest(pr);
+        setCanMakePayment(true);
+      } else {
+        console.log('[PAYMENT] Apple Pay / Google Pay not available');
+      }
+    });
+
+    // Handle payment method from Apple Pay / Google Pay
+    pr.on('paymentmethod', async (ev) => {
+      console.log('[PAYMENT] PaymentMethod from wallet:', ev.paymentMethod.id);
+      
+      try {
+        // Call edge function to create and confirm payment
+        const { data, error } = await supabase.functions.invoke('process-card-payment', {
+          body: {
+            paymentMethodId: ev.paymentMethod.id,
+            priceKey,
+            email: ev.payerEmail || customerEmail,
+            name: ev.payerName || customerName,
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.requires_action && data.client_secret) {
+          // Handle 3D Secure
+          const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
+          
+          if (confirmError) {
+            ev.complete('fail');
+            toast.error('Pago rechazado');
+            return;
+          }
+
+          if (paymentIntent?.status === 'succeeded') {
+            ev.complete('success');
+            await registerUtmifySale(paymentIntent.id);
+            toast.success('¡Pago realizado con éxito!');
+            onSuccess();
+          }
+        } else if (data.success) {
+          ev.complete('success');
+          await registerUtmifySale(data.paymentIntentId);
+          toast.success('¡Pago realizado con éxito!');
+          onSuccess();
+        } else {
+          ev.complete('fail');
+          toast.error(data.error || 'Pago rechazado');
+        }
+      } catch (err) {
+        console.error('[PAYMENT] Wallet payment error:', err);
+        ev.complete('fail');
+        toast.error('Error al procesar el pago');
+      }
+    });
+
+  }, [stripe, amount, priceKey, customerEmail, customerName, productName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,89 +289,119 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Cardholder Name */}
-      <div className="space-y-2">
-        <label className="block text-foreground font-medium text-sm">
-          Nombre en la tarjeta
-        </label>
-        <Input
-          type="text"
-          placeholder="Como aparece en la tarjeta"
-          value={cardholderName}
-          onChange={(e) => setCardholderName(e.target.value)}
-          className="h-12 bg-white text-black border-gray-300"
-          required
-        />
-      </div>
+    <div className="space-y-4">
+      {/* Apple Pay / Google Pay Button */}
+      {canMakePayment && paymentRequest && (
+        <>
+          <div className="space-y-2">
+            <PaymentRequestButtonElement
+              options={{
+                paymentRequest,
+                style: {
+                  paymentRequestButton: {
+                    type: 'default',
+                    theme: 'dark',
+                    height: '48px',
+                  },
+                },
+              }}
+            />
+          </div>
+          
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-muted-foreground text-sm">o pagar con tarjeta</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        </>
+      )}
 
-      {/* Card Number */}
-      <div className="space-y-2">
-        <label className="block text-foreground font-medium text-sm">
-          Número de tarjeta
-        </label>
-        <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
-          <CardNumberElement 
-            options={{ style: elementStyle, showIcon: true }}
-            onChange={(e) => setCardNumberComplete(e.complete)}
-            className="w-full"
+      {/* Card Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Cardholder Name */}
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            Nombre en la tarjeta
+          </label>
+          <Input
+            type="text"
+            placeholder="Como aparece en la tarjeta"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            className="h-12 bg-white text-black border-gray-300"
+            required
           />
         </div>
-      </div>
 
-      {/* Expiry and CVC */}
-      <div className="grid grid-cols-2 gap-4">
+        {/* Card Number */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Vencimiento
+            Número de tarjeta
           </label>
           <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
-            <CardExpiryElement 
-              options={{ style: elementStyle }}
-              onChange={(e) => setCardExpiryComplete(e.complete)}
+            <CardNumberElement 
+              options={{ style: elementStyle, showIcon: true }}
+              onChange={(e) => setCardNumberComplete(e.complete)}
               className="w-full"
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <label className="block text-foreground font-medium text-sm">
-            CVV
-          </label>
-          <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
-            <CardCvcElement 
-              options={{ style: elementStyle }}
-              onChange={(e) => setCardCvcComplete(e.complete)}
-              className="w-full"
-            />
+
+        {/* Expiry and CVC */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-foreground font-medium text-sm">
+              Vencimiento
+            </label>
+            <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
+              <CardExpiryElement 
+                options={{ style: elementStyle }}
+                onChange={(e) => setCardExpiryComplete(e.complete)}
+                className="w-full"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-foreground font-medium text-sm">
+              CVV
+            </label>
+            <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
+              <CardCvcElement 
+                options={{ style: elementStyle }}
+                onChange={(e) => setCardCvcComplete(e.complete)}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Security Notice */}
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-        <Shield className="w-4 h-4" />
-        <span>Pago 100% seguro con encriptación SSL</span>
-      </div>
+        {/* Security Notice */}
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <Shield className="w-4 h-4" />
+          <span>Pago 100% seguro con encriptación SSL</span>
+        </div>
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        disabled={isProcessing || !stripe || !elements || !isFormComplete}
-        className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
-      >
-        {isProcessing ? (
-          <>
-            <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-            Procesando...
-          </>
-        ) : (
-          <>
-            <Lock className="w-5 h-5" />
-            PAGAR ${amount.toFixed(2)} USD
-          </>
-        )}
-      </Button>
-    </form>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={isProcessing || !stripe || !elements || !isFormComplete}
+          className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
+        >
+          {isProcessing ? (
+            <>
+              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              Procesando...
+            </>
+          ) : (
+            <>
+              <Lock className="w-5 h-5" />
+              PAGAR ${amount.toFixed(2)} USD
+            </>
+          )}
+        </Button>
+      </form>
+    </div>
   );
 };
 
