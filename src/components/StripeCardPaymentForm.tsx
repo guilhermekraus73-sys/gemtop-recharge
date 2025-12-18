@@ -5,13 +5,13 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { Shield, Lock } from 'lucide-react';
+import { Shield, Lock, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface StripeCardPaymentFormProps {
-  amount: number;
   priceKey: string;
+  amount: number;
   onSuccess: () => void;
   productName?: string;
   customerEmail: string;
@@ -19,8 +19,8 @@ interface StripeCardPaymentFormProps {
 }
 
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
-  amount, 
   priceKey,
+  amount, 
   onSuccess, 
   productName = 'Diamantes Free Fire',
   customerEmail,
@@ -29,6 +29,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cardComplete, setCardComplete] = useState(false);
 
   // Get UTMify leadId from localStorage
   const getUtmifyLeadId = (): string => {
@@ -118,7 +119,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     setIsProcessing(true);
 
     try {
-      // Step 1: Create PaymentMethod from card details
+      // Create PaymentMethod from card details
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
@@ -134,7 +135,9 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         return;
       }
 
-      // Step 2: Send to server to create and confirm PaymentIntent
+      console.log('[PAYMENT] PaymentMethod created:', paymentMethod.id);
+
+      // Call edge function to create and confirm payment in one step
       const { data, error } = await supabase.functions.invoke('process-card-payment', {
         body: {
           paymentMethodId: paymentMethod.id,
@@ -144,22 +147,16 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         }
       });
 
-      if (error) {
-        throw new Error(error.message || 'Error en el servidor');
-      }
+      if (error) throw error;
 
-      if (data?.error) {
-        toast.error(data.error);
-        setIsProcessing(false);
-        return;
-      }
+      console.log('[PAYMENT] Response:', data);
 
-      // Step 3: Handle requires_action (3D Secure, etc.)
-      if (data?.requires_action && data?.client_secret) {
+      if (data.requires_action && data.client_secret) {
+        // Handle 3D Secure authentication
         const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
         
         if (confirmError) {
-          toast.error(confirmError.message || 'Error en la autenticación');
+          toast.error(confirmError.message || 'Tarjeta rechazada');
           setIsProcessing(false);
           return;
         }
@@ -168,42 +165,55 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           await registerUtmifySale(paymentIntent.id);
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
+          return;
         }
-      } else if (data?.success) {
+      }
+
+      if (data.success) {
         // Payment succeeded without 3DS
         await registerUtmifySale(data.paymentIntentId);
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
+      } else if (data.error) {
+        // Payment failed (card declined, etc.)
+        toast.error(data.error.includes('declined') ? 'Tarjeta rechazada' : data.error);
+        setIsProcessing(false);
       }
-
-    } catch (err: any) {
+    } catch (err) {
       console.error('Payment error:', err);
-      toast.error(err.message || 'Error al procesar el pago');
-    } finally {
+      toast.error('Error al procesar el pago');
       setIsProcessing(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border border-border rounded-lg bg-background">
-        <CardElement 
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
+      {/* Card Element */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-foreground font-medium">
+          <CreditCard className="w-4 h-4" />
+          Datos de la tarjeta
+        </label>
+        <div className="p-4 border border-border rounded-lg bg-background">
+          <CardElement 
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#fff',
+                  '::placeholder': {
+                    color: '#9ca3af',
+                  },
+                },
+                invalid: {
+                  color: '#ef4444',
                 },
               },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-            hidePostalCode: true,
-          }}
-        />
+              hidePostalCode: true,
+            }}
+            onChange={(e) => setCardComplete(e.complete)}
+          />
+        </div>
       </div>
 
       {/* Security Notice */}
@@ -215,7 +225,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isProcessing || !stripe || !elements}
+        disabled={isProcessing || !stripe || !elements || !cardComplete}
         className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
       >
         {isProcessing ? (

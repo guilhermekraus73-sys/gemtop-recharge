@@ -5,10 +5,9 @@ import { Input } from '@/components/ui/input';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
-import StripePaymentForm from '@/components/StripePaymentForm';
+import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-import { supabase } from '@/integrations/supabase/client';
 
 const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
@@ -20,10 +19,10 @@ const Checkout9: React.FC = () => {
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   useUtmifyStripePixel();
 
+  const priceKey = '9';
   const priceUsd = 9.00;
   const diamonds = 5600;
 
@@ -42,7 +41,7 @@ const Checkout9: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleContinueToPayment = async () => {
+  const handleContinueToPayment = () => {
     if (!email || !confirmEmail || !fullName) {
       toast.error('Por favor, complete todos los campos');
       return;
@@ -53,31 +52,7 @@ const Checkout9: React.FC = () => {
       return;
     }
 
-    setIsLoadingPayment(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: priceUsd,
-          currency: 'usd',
-          customerEmail: email,
-          customerName: fullName,
-          productName: `${diamonds.toLocaleString()} Diamantes Free Fire`,
-        }
-      });
-
-      if (error) throw error;
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-      } else {
-        throw new Error('No se pudo crear la sesión de pago');
-      }
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Error al preparar el pago. Intente nuevamente.');
-    } finally {
-      setIsLoadingPayment(false);
-    }
+    setShowPaymentForm(true);
   };
 
   const handlePaymentSuccess = () => {
@@ -131,7 +106,7 @@ const Checkout9: React.FC = () => {
             </div>
 
             {/* Customer Info Form */}
-            {!clientSecret && (
+            {!showPaymentForm && (
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-foreground font-medium mb-2">Seu email</label>
@@ -171,36 +146,19 @@ const Checkout9: React.FC = () => {
 
                 <button
                   onClick={handleContinueToPayment}
-                  disabled={!email || !confirmEmail || !fullName || isLoadingPayment}
+                  disabled={!email || !confirmEmail || !fullName}
                   className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoadingPayment ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Preparando pago...
-                    </>
-                  ) : (
-                    'Continuar al pago'
-                  )}
+                  Continuar al pago
                 </button>
               </div>
             )}
 
-            {/* Payment Section */}
-            {clientSecret && (
-              <Elements 
-                stripe={stripePromise} 
-                options={{
-                  clientSecret,
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      colorPrimary: '#ef4444',
-                    },
-                  },
-                }}
-              >
-                <StripePaymentForm 
+            {/* Payment Section - No PaymentIntent created until user clicks PAGAR */}
+            {showPaymentForm && (
+              <Elements stripe={stripePromise}>
+                <StripeCardPaymentForm 
+                  priceKey={priceKey}
                   amount={priceUsd}
                   onSuccess={handlePaymentSuccess}
                   productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
