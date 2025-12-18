@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
-  CardElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { Shield, Lock, CreditCard } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,6 +21,20 @@ interface StripeCardPaymentFormProps {
   customerName: string;
 }
 
+const elementStyle = {
+  base: {
+    fontSize: '16px',
+    color: '#1a1a1a',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    '::placeholder': {
+      color: '#9ca3af',
+    },
+  },
+  invalid: {
+    color: '#ef4444',
+  },
+};
+
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
   priceKey,
   amount, 
@@ -29,7 +46,12 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [cardComplete, setCardComplete] = useState(false);
+  const [cardholderName, setCardholderName] = useState(customerName);
+  const [cardNumberComplete, setCardNumberComplete] = useState(false);
+  const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
+  const [cardCvcComplete, setCardCvcComplete] = useState(false);
+
+  const isFormComplete = cardholderName && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
 
   // Get UTMify leadId from localStorage
   const getUtmifyLeadId = (): string => {
@@ -110,8 +132,8 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       return;
     }
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
+    const cardNumberElement = elements.getElement(CardNumberElement);
+    if (!cardNumberElement) {
       toast.error('Error al cargar el formulario de pago');
       return;
     }
@@ -122,9 +144,9 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       // Create PaymentMethod from card details
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardElement,
+        card: cardNumberElement,
         billing_details: {
-          name: customerName,
+          name: cardholderName,
           email: customerEmail,
         },
       });
@@ -143,7 +165,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           paymentMethodId: paymentMethod.id,
           priceKey,
           email: customerEmail,
-          name: customerName,
+          name: cardholderName,
         }
       });
 
@@ -188,31 +210,60 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Card Element */}
+      {/* Cardholder Name */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-foreground font-medium">
-          <CreditCard className="w-4 h-4" />
-          Datos de la tarjeta
+        <label className="block text-foreground font-medium text-sm">
+          Nombre en la tarjeta
         </label>
-        <div className="p-4 border border-border rounded-lg bg-background">
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#fff',
-                  '::placeholder': {
-                    color: '#9ca3af',
-                  },
-                },
-                invalid: {
-                  color: '#ef4444',
-                },
-              },
-              hidePostalCode: true,
-            }}
-            onChange={(e) => setCardComplete(e.complete)}
+        <Input
+          type="text"
+          placeholder="Como aparece en la tarjeta"
+          value={cardholderName}
+          onChange={(e) => setCardholderName(e.target.value)}
+          className="h-12 bg-white text-black border-gray-300"
+          required
+        />
+      </div>
+
+      {/* Card Number */}
+      <div className="space-y-2">
+        <label className="block text-foreground font-medium text-sm">
+          Número de tarjeta
+        </label>
+        <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
+          <CardNumberElement 
+            options={{ style: elementStyle, showIcon: true }}
+            onChange={(e) => setCardNumberComplete(e.complete)}
+            className="w-full"
           />
+        </div>
+      </div>
+
+      {/* Expiry and CVC */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            Vencimiento
+          </label>
+          <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
+            <CardExpiryElement 
+              options={{ style: elementStyle }}
+              onChange={(e) => setCardExpiryComplete(e.complete)}
+              className="w-full"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            CVV
+          </label>
+          <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
+            <CardCvcElement 
+              options={{ style: elementStyle }}
+              onChange={(e) => setCardCvcComplete(e.complete)}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
 
@@ -225,7 +276,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isProcessing || !stripe || !elements || !cardComplete}
+        disabled={isProcessing || !stripe || !elements || !isFormComplete}
         className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
       >
         {isProcessing ? (
