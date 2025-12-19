@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import freefireLogoBanner from "@/assets/freefire-logo.png";
-import trophyIcon from "@/assets/trophy-icon.png";
 import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
 import q2DjAlok from "@/assets/quiz/q2-dj-alok.jpg";
 import q3Map from "@/assets/quiz/q3-map.jpg";
@@ -158,11 +157,6 @@ const Quiz: React.FC = () => {
         </div>
         
         <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
-          {/* Trophy Icon */}
-          <div className="flex justify-center mb-4">
-            <img src={trophyIcon} alt="Trophy" className="w-12 h-auto object-contain" />
-          </div>
-          
           <h1 className="text-2xl font-bold text-primary text-center mb-2">
             Encuesta Free Fire
           </h1>
@@ -172,7 +166,7 @@ const Quiz: React.FC = () => {
 
           <div className="info-box mb-4">
             <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
-              <img src={trophyIcon} alt="Trophy" className="h-5 w-5" /> Premio Increíble
+              🏆 Premio Increíble
             </h3>
             <p className="text-sm text-muted-foreground">
               Acierta 70% o más de las preguntas y desbloquea hasta{" "}
