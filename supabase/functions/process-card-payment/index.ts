@@ -13,6 +13,83 @@ const PRICES: Record<string, { amount: number; diamonds: number }> = {
   "19": { amount: 1900, diamonds: 22400 },   // $19.00
 };
 
+// Function to register sale with UTMify
+async function registerUtmifySale(data: {
+  orderId: string;
+  email: string;
+  name: string;
+  value: number;
+  productName: string;
+  trackingParams?: any;
+}) {
+  const apiToken = Deno.env.get("UTMIFY_API_TOKEN");
+  if (!apiToken) {
+    console.log("[UTMIFY] No API token configured, skipping registration");
+    return;
+  }
+
+  try {
+    console.log("[UTMIFY] Registering sale", { orderId: data.orderId, value: data.value });
+
+    const utmifyPayload = {
+      apiToken,
+      orderId: data.orderId,
+      platform: "Stripe",
+      paymentMethod: "CreditCard",
+      status: "paid",
+      createdAt: new Date().toISOString(),
+      approvedDate: new Date().toISOString(),
+      customer: {
+        name: data.name || "Cliente",
+        email: data.email || "",
+        phone: "",
+        document: "",
+        country: "BR",
+      },
+      products: [
+        {
+          id: data.orderId,
+          name: data.productName || "Diamantes Free Fire",
+          planId: "",
+          quantity: 1,
+          priceInCents: Math.round(data.value * 100),
+        },
+      ],
+      trackingParameters: {
+        src: data.trackingParams?.src || "",
+        sck: data.trackingParams?.sck || "",
+        utm_source: data.trackingParams?.utm_source || "",
+        utm_medium: data.trackingParams?.utm_medium || "",
+        utm_campaign: data.trackingParams?.utm_campaign || "",
+        utm_content: data.trackingParams?.utm_content || "",
+        utm_term: data.trackingParams?.utm_term || "",
+      },
+      commission: {
+        totalPriceInCents: Math.round(data.value * 100),
+        gatewayFeeInCents: 0,
+        userCommissionInCents: Math.round(data.value * 100),
+        currency: "USD",
+      },
+      isTest: false,
+    };
+
+    const response = await fetch("https://api.utmify.com.br/api/v1/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiToken}`,
+        "x-api-token": apiToken,
+      },
+      body: JSON.stringify(utmifyPayload),
+    });
+
+    const responseText = await response.text();
+    console.log("[UTMIFY] API response", { status: response.status, response: responseText });
+  } catch (error) {
+    console.error("[UTMIFY] Error registering sale:", error);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -20,9 +97,9 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentMethodId, priceKey, email, name } = await req.json();
+    const { paymentMethodId, priceKey, email, name, trackingParams } = await req.json();
     
-    console.log("[PROCESS-CARD-PAYMENT] Request received", { paymentMethodId, priceKey, email, name });
+    console.log("[PROCESS-CARD-PAYMENT] Request received", { paymentMethodId, priceKey, email, name, trackingParams });
 
     if (!paymentMethodId) {
       throw new Error("PaymentMethod ID is required");
@@ -75,9 +152,20 @@ serve(async (req) => {
       });
     }
 
-    // Payment succeeded
+    // Payment succeeded - Register with UTMify
     if (paymentIntent.status === 'succeeded') {
       console.log("[PROCESS-CARD-PAYMENT] Payment succeeded:", paymentIntent.id);
+      
+      // Register sale with UTMify immediately
+      await registerUtmifySale({
+        orderId: paymentIntent.id,
+        email: email || '',
+        name: name || '',
+        value: priceData.amount / 100, // Convert cents to dollars
+        productName: `${priceData.diamonds} Diamantes Free Fire`,
+        trackingParams,
+      });
+
       return new Response(JSON.stringify({ 
         success: true,
         paymentIntentId: paymentIntent.id 
