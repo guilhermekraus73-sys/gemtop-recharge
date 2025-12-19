@@ -4,12 +4,10 @@ import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { toast } from 'sonner';
-import StripePaymentForm from '@/components/StripePaymentForm';
+import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-import { supabase } from '@/integrations/supabase/client';
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
@@ -18,10 +16,9 @@ const Checkout15: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   useUtmifyStripePixel();
 
+  const priceKey = '15';
   const priceUsd = 15.90;
   const diamonds = 11200;
 
@@ -39,39 +36,6 @@ const Checkout15: React.FC = () => {
 
     return () => clearInterval(timer);
   }, []);
-
-  const handleContinueToPayment = async () => {
-    if (!email || !fullName) {
-      toast.error('Por favor, complete todos los campos');
-      return;
-    }
-
-    setIsLoadingPayment(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: priceUsd,
-          currency: 'usd',
-          customerEmail: email,
-          customerName: fullName,
-          productName: `${diamonds.toLocaleString()} Diamantes Free Fire`,
-        }
-      });
-
-      if (error) throw error;
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-      } else {
-        throw new Error('No se pudo crear la sesión de pago');
-      }
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Error al preparar el pago. Intente nuevamente.');
-    } finally {
-      setIsLoadingPayment(false);
-    }
-  };
 
   const handlePaymentSuccess = () => {
     navigate('/obrigado');
@@ -124,72 +88,43 @@ const Checkout15: React.FC = () => {
             </div>
 
             {/* Customer Info Form */}
-            {!clientSecret && (
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-foreground font-medium mb-2">Seu email</label>
-                  <Input
-                    type="email"
-                    placeholder="Digite seu email para receber a compra"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 bg-muted border-border"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-foreground font-medium mb-2">Nome completo</label>
-                  <Input
-                    type="text"
-                    placeholder="Digite seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-12 bg-muted border-border"
-                    required
-                  />
-                </div>
-
-                <button
-                  onClick={handleContinueToPayment}
-                  disabled={!email || !fullName || isLoadingPayment}
-                  className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoadingPayment ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Preparando pago...
-                    </>
-                  ) : (
-                    'Continuar al pago'
-                  )}
-                </button>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-foreground font-medium mb-2">Seu email</label>
+                <Input
+                  type="email"
+                  placeholder="Digite seu email para receber a compra"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
+                />
               </div>
-            )}
+
+              <div>
+                <label className="block text-foreground font-medium mb-2">Nome completo</label>
+                <Input
+                  type="text"
+                  placeholder="Digite seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
+                />
+              </div>
+            </div>
 
             {/* Payment Section */}
-            {clientSecret && (
-              <Elements 
-                stripe={stripePromise} 
-                options={{
-                  clientSecret,
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      colorPrimary: '#ef4444',
-                    },
-                  },
-                }}
-              >
-                <StripePaymentForm 
-                  amount={priceUsd}
-                  onSuccess={handlePaymentSuccess}
-                  productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-                  customerEmail={email}
-                  customerName={fullName}
-                />
-              </Elements>
-            )}
+            <Elements stripe={stripePromise}>
+              <StripeCardPaymentForm 
+                priceKey={priceKey}
+                amount={priceUsd}
+                onSuccess={handlePaymentSuccess}
+                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                customerEmail={email}
+                customerName={fullName}
+              />
+            </Elements>
           </div>
         </div>
       </div>
