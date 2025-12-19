@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
-const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
-const freefireIcon = "https://recargasdiamante.site/assets/freefire-icon-B-2fWEW9.png";
-const diamondIcon = "https://recargasdiamante.site/assets/diamond-icon-DfkGj-iT.png";
+import membershipsBanner from "@/assets/memberships-banner.jpg";
+import garenaLogo from "@/assets/garena-logo.png";
+import freefireIcon from "@/assets/freefire-character.png";
+import diamondIcon from "@/assets/diamond-icon.png";
 
 const Identify: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
