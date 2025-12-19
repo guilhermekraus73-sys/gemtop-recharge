@@ -17,7 +17,6 @@ const Checkout9: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   useUtmifyStripePixel();
 
   const priceKey = '9';
@@ -39,14 +38,6 @@ const Checkout9: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleContinueToPayment = () => {
-    if (!email || !fullName) {
-      toast.error('Por favor, complete todos los campos');
-      return;
-    }
-
-    setShowPaymentForm(true);
-  };
 
   const handlePaymentSuccess = () => {
     navigate('/obrigado');
@@ -99,55 +90,43 @@ const Checkout9: React.FC = () => {
             </div>
 
             {/* Customer Info Form */}
-            {!showPaymentForm && (
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-foreground font-medium mb-2">Seu email</label>
-                  <Input
-                    type="email"
-                    placeholder="Digite seu email para receber a compra"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 bg-muted border-border"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-foreground font-medium mb-2">Nome completo</label>
-                  <Input
-                    type="text"
-                    placeholder="Digite seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-12 bg-muted border-border"
-                    required
-                  />
-                </div>
-
-                <button
-                  onClick={handleContinueToPayment}
-                  disabled={!email || !fullName}
-                  className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Continuar al pago
-                </button>
-              </div>
-            )}
-
-            {/* Payment Section - No PaymentIntent created until user clicks PAGAR */}
-            {showPaymentForm && (
-              <Elements stripe={stripePromise}>
-                <StripeCardPaymentForm 
-                  priceKey={priceKey}
-                  amount={priceUsd}
-                  onSuccess={handlePaymentSuccess}
-                  productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-                  customerEmail={email}
-                  customerName={fullName}
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-foreground font-medium mb-2">Seu email</label>
+                <Input
+                  type="email"
+                  placeholder="Digite seu email para receber a compra"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
                 />
-              </Elements>
-            )}
+              </div>
+
+              <div>
+                <label className="block text-foreground font-medium mb-2">Nome completo</label>
+                <Input
+                  type="text"
+                  placeholder="Digite seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-12 bg-muted border-border"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Payment Section */}
+            <Elements stripe={stripePromise}>
+              <StripeCardPaymentForm 
+                priceKey={priceKey}
+                amount={priceUsd}
+                onSuccess={handlePaymentSuccess}
+                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                customerEmail={email}
+                customerName={fullName}
+              />
+            </Elements>
           </div>
         </div>
       </div>
