@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
-const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
-const freefireCard = "https://recargasdiamante.site/assets/freefire-character-CGZceXtZ.png";
-const diamondIcon = "https://recargasdiamante.site/assets/diamond-icon-DfkGj-iT.png";
+import membershipsBanner from "@/assets/memberships-banner.jpg";
+import garenaLogo from "@/assets/garena-logo.png";
+import freefireIcon from "@/assets/freefire-character.png";
+import freefireBanner from "@/assets/freefire-banner.png";
+import diamondIcon from "@/assets/diamond-icon.png";
 
 type Package = {
   id: number;
@@ -107,10 +108,13 @@ const Recharge: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="header-white py-4 px-4">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <img src={garenaLogo} alt="Garena" className="h-8" />
-          <span className="font-semibold text-lg text-foreground">Centro Oficial de Recargas</span>
+      <header className="bg-white py-3 px-4 border-b border-border">
+        <div className="max-w-lg mx-auto flex items-center gap-2">
+          <img src={garenaLogo} alt="Garena" className="h-5" />
+          <div className="flex flex-col">
+            <span className="text-xs font-medium text-foreground leading-tight">Canal Oficial de</span>
+            <span className="text-xs font-medium text-foreground leading-tight">Recarga</span>
+          </div>
         </div>
       </header>
 
@@ -124,17 +128,17 @@ const Recharge: React.FC = () => {
         <section className="mb-6">
           <h2 className="text-sm font-semibold text-muted-foreground mb-3">Selección de Juego</h2>
 
-          <div className="game-card game-card-selected">
-            <div className="flex items-center gap-3 p-4">
-              <img src={freefireCard} alt="Free Fire" className="w-16 h-16 rounded-lg" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Free Fire</h3>
-                <p className="text-xs text-muted-foreground">© Pagamento 100% Seguro</p>
-              </div>
-              <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-              </div>
+          {/* Mini selected card */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full border border-primary">
+              <img src={freefireIcon} alt="Free Fire" className="w-5 h-5" />
+              <span className="text-sm font-medium text-foreground">Free Fire</span>
             </div>
+          </div>
+
+          {/* Main game banner */}
+          <div className="rounded-xl overflow-hidden">
+            <img src={freefireBanner} alt="Free Fire - Pago 100% seguro" className="w-full h-auto" />
           </div>
         </section>
 
