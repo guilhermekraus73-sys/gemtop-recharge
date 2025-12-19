@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-import freefireLogoBanner from "@/assets/freefire-logo-banner.png";
+import freefireLogoBanner from "@/assets/freefire-logo.png";
 import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
 import q2DjAlok from "@/assets/quiz/q2-dj-alok.jpg";
 import q3Map from "@/assets/quiz/q3-map.jpg";
