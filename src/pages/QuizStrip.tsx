@@ -3,6 +3,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
 import freefireLogoBanner from "@/assets/freefire-logo-banner.png";
+import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
+import q2DjAlok from "@/assets/quiz/q2-dj-alok.jpg";
+import q3Map from "@/assets/quiz/q3-map.jpg";
+import q4Sniper from "@/assets/quiz/q4-sniper.jpg";
+import q5Squad from "@/assets/quiz/q5-squad.jpg";
+import q6Pets from "@/assets/quiz/q6-pets.jpg";
+import q7Ranks from "@/assets/quiz/q7-ranks.jpg";
+import q8Vehicles from "@/assets/quiz/q8-vehicles.jpg";
+import q9Skins from "@/assets/quiz/q9-skins.jpg";
+import q10Airdrop from "@/assets/quiz/q10-airdrop.jpg";
+
 type Question = {
   question: string;
   options: string[];
@@ -15,61 +26,61 @@ const questions: Question[] = [
     question: "¿Cuál es el nombre del modo de juego principal de Free Fire?",
     options: ["Team Deathmatch", "Clash Squad", "Battle Royale", "Ranked Mode"],
     correctIndex: 2,
-    imageUrl: "https://recargasdiamante.site/assets/quiz-illustration-xs2wBzmH.jpg",
+    imageUrl: q1BattleRoyale,
   },
   {
     question: "¿Cuál es la habilidad especial del personaje DJ Alok?",
     options: ["Curación en área", "Velocidad aumentada", "Daño extra", "Escudo de protección"],
     correctIndex: 0,
-    imageUrl: "https://recargasdiamante.site/assets/q2-dj-alok-CM_6vL28.jpg",
+    imageUrl: q2DjAlok,
   },
   {
     question: "¿Cuál es el mapa clásico de Free Fire?",
     options: ["Kalahari", "Alpine", "Purgatory", "Bermuda"],
     correctIndex: 3,
-    imageUrl: "https://recargasdiamante.site/assets/q3-map-Cb4k91U-.jpg",
+    imageUrl: q3Map,
   },
   {
     question: "¿Cuál es el arma de francotirador más poderosa en Free Fire?",
     options: ["Kar98k", "AWM", "M82B", "SVD"],
     correctIndex: 1,
-    imageUrl: "https://recargasdiamante.site/assets/q4-sniper-B9XKu97q.jpg",
+    imageUrl: q4Sniper,
   },
   {
     question: "¿Cuántos jugadores pueden estar en un squad en el modo clásico?",
     options: ["2", "5", "3", "4"],
     correctIndex: 3,
-    imageUrl: "https://recargasdiamante.site/assets/q5-squad-Ds7-7wwZ.jpg",
+    imageUrl: q5Squad,
   },
   {
     question: "¿Cuál es la función de las mascotas en Free Fire?",
     options: ["Atacar enemigos", "Cargar objetos", "Solo decoración", "Proporcionar habilidades especiales"],
     correctIndex: 3,
-    imageUrl: "https://recargasdiamante.site/assets/q6-pets-BCg-J60G.jpg",
+    imageUrl: q6Pets,
   },
   {
     question: "¿Cuál es el rango más alto en el modo clasificatorio de Free Fire?",
     options: ["Heroico", "Diamante", "Gran Maestro", "Maestro"],
     correctIndex: 0,
-    imageUrl: "https://recargasdiamante.site/assets/q7-ranks-DKFne6Xe.jpg",
+    imageUrl: q7Ranks,
   },
   {
     question: "¿Qué vehículo es conocido como el más resistente en Free Fire?",
     options: ["Monster Truck", "Moto", "Tuk Tuk", "Auto"],
     correctIndex: 0,
-    imageUrl: "https://recargasdiamante.site/assets/q8-vehicles-D7j6gjaZ.jpg",
+    imageUrl: q8Vehicles,
   },
   {
     question: "¿Qué son las skins en Free Fire?",
     options: ["Misiones", "Moneda del juego", "Personalizaciones visuales", "Armas especiales"],
     correctIndex: 2,
-    imageUrl: "https://recargasdiamante.site/assets/q9-skins-D5xcCcXH.jpg",
+    imageUrl: q9Skins,
   },
   {
     question: "¿Qué encuentras en un airdrop en Free Fire?",
     options: ["Comida", "Mascotas", "Vehículos", "Objetos raros y armas poderosas"],
     correctIndex: 3,
-    imageUrl: "https://recargasdiamante.site/assets/q10-airdrop-CIi6E73x.jpg",
+    imageUrl: q10Airdrop,
   },
 ];
 
