@@ -11,8 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import diamondHotmart from '@/assets/diamond-hotmart.jpg';
-
-const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
+import membershipsBanner from '@/assets/memberships-banner.jpg';
 
 interface Package {
   id: string;
@@ -106,7 +105,7 @@ const Checkout: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
           <img
-            src={membresiasBanner}
+            src={membershipsBanner}
             alt="¡Conoce las Membresías Free Fire!"
             className="w-full rounded-lg shadow-lg"
           />

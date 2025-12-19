@@ -6,6 +6,13 @@ import garenaLogo from "@/assets/garena-logo.png";
 import freefireIcon from "@/assets/freefire-character.png";
 import freefireBanner from "@/assets/freefire-banner.png";
 import diamondIcon from "@/assets/diamond-icon.png";
+import paymentNequi from "@/assets/payment-nequi.png";
+import paymentYape from "@/assets/payment-yape.png";
+import paymentMercadopago from "@/assets/payment-mercadopago.png";
+import paymentEfecty from "@/assets/payment-efecty.svg";
+import paymentBancolombia from "@/assets/payment-bancolombia.png";
+import paymentPaypal from "@/assets/payment-paypal.png";
+import paymentPse from "@/assets/payment-pse.png";
 
 type Package = {
   id: number;
@@ -23,19 +30,12 @@ const packages: Package[] = [
 
 const paymentMethods = [
   { id: "credit", name: "Crédito / Débito", type: "cards" },
-  { id: "nequi", name: "NEQUI", logo: "https://recargasdiamante.site/assets/payment-nequi-DMZgP08t.svg" },
-  { id: "yape", name: "Yape", logo: "https://recargasdiamante.site/assets/payment-yape-koqgwqlR.png" },
-  { id: "mercadopago", name: "MercadoPago", logo: "https://recargasdiamante.site/assets/payment-mercadopago-LqiSogzV.png" },
-  {
-    id: "efecty",
-    name: "Efecty Bancolombia",
-    logos: [
-      "https://recargasdiamante.site/assets/payment-efecty-m22drQrj.png",
-      "https://recargasdiamante.site/assets/payment-bancolombia-BThx0E4T.png",
-    ],
-  },
-  { id: "paypal", name: "PayPal", logo: "https://recargasdiamante.site/assets/payment-paypal-Dw1SPWUh.png" },
-  { id: "pse", name: "PSE", logo: "https://recargasdiamante.site/assets/payment-pse-B40taAPz.png" },
+  { id: "nequi", name: "NEQUI", logo: paymentNequi },
+  { id: "yape", name: "Yape", logo: paymentYape },
+  { id: "mercadopago", name: "MercadoPago", logo: paymentMercadopago },
+  { id: "efecty", name: "Efecty Bancolombia", logos: [paymentEfecty, paymentBancolombia] },
+  { id: "paypal", name: "PayPal", logo: paymentPaypal },
+  { id: "pse", name: "PSE", logo: paymentPse },
 ];
 
 const Recharge: React.FC = () => {
