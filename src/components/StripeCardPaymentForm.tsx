@@ -164,12 +164,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       console.log('[PAYMENT] PaymentMethod from wallet:', ev.paymentMethod.id);
       
       try {
+        const trackingParams = getUtmParams();
         const { data, error } = await supabase.functions.invoke('process-card-payment', {
           body: {
             paymentMethodId: ev.paymentMethod.id,
             priceKey,
             email: ev.payerEmail || customerEmail,
             name: ev.payerName || customerName,
+            trackingParams,
           }
         });
 
@@ -248,12 +250,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       console.log('[PAYMENT] PaymentMethod created:', paymentMethod.id);
 
       // Call edge function to create and confirm payment in one step
+      const trackingParams = getUtmParams();
       const { data, error } = await supabase.functions.invoke('process-card-payment', {
         body: {
           paymentMethodId: paymentMethod.id,
           priceKey,
           email: customerEmail,
           name: cardholderName,
+          trackingParams,
         }
       });
 
