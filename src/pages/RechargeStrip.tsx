@@ -2,10 +2,18 @@ import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
-const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
-const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
-const freefireCard = "https://recargasdiamante.site/assets/freefire-character-CGZceXtZ.png";
-const diamondIcon = "https://recargasdiamante.site/assets/diamond-icon-DfkGj-iT.png";
+import membershipsBanner from "@/assets/memberships-banner.jpg";
+import garenaLogo from "@/assets/garena-logo.png";
+import freefireIcon from "@/assets/freefire-character.png";
+import freefireBanner from "@/assets/freefire-banner.png";
+import diamondIcon from "@/assets/diamond-icon.png";
+import paymentNequi from "@/assets/payment-nequi.png";
+import paymentYape from "@/assets/payment-yape.png";
+import paymentMercadopago from "@/assets/payment-mercadopago.png";
+import paymentEfecty from "@/assets/payment-efecty.svg";
+import paymentBancolombia from "@/assets/payment-bancolombia.png";
+import paymentPaypal from "@/assets/payment-paypal.png";
+import paymentPse from "@/assets/payment-pse.png";
 
 type Package = {
   id: number;
@@ -23,19 +31,12 @@ const packages: Package[] = [
 
 const paymentMethods = [
   { id: "credit", name: "Crédito / Débito", type: "cards" },
-  { id: "nequi", name: "NEQUI", logo: "https://recargasdiamante.site/assets/payment-nequi-DMZgP08t.svg" },
-  { id: "yape", name: "Yape", logo: "https://recargasdiamante.site/assets/payment-yape-koqgwqlR.png" },
-  { id: "mercadopago", name: "MercadoPago", logo: "https://recargasdiamante.site/assets/payment-mercadopago-LqiSogzV.png" },
-  {
-    id: "efecty",
-    name: "Efecty Bancolombia",
-    logos: [
-      "https://recargasdiamante.site/assets/payment-efecty-m22drQrj.png",
-      "https://recargasdiamante.site/assets/payment-bancolombia-BThx0E4T.png",
-    ],
-  },
-  { id: "paypal", name: "PayPal", logo: "https://recargasdiamante.site/assets/payment-paypal-Dw1SPWUh.png" },
-  { id: "pse", name: "PSE", logo: "https://recargasdiamante.site/assets/payment-pse-B40taAPz.png" },
+  { id: "nequi", name: "NEQUI", logo: paymentNequi },
+  { id: "yape", name: "Yape", logo: paymentYape },
+  { id: "mercadopago", name: "MercadoPago", logo: paymentMercadopago },
+  { id: "efecty", name: "Efecty Bancolombia", logos: [paymentEfecty, paymentBancolombia] },
+  { id: "paypal", name: "PayPal", logo: paymentPaypal },
+  { id: "pse", name: "PSE", logo: paymentPse },
 ];
 
 const RechargeStrip: React.FC = () => {
@@ -85,17 +86,17 @@ const RechargeStrip: React.FC = () => {
         <section className="mb-6">
           <h2 className="text-sm font-semibold text-muted-foreground mb-3">Selección de Juego</h2>
 
-          <div className="game-card game-card-selected">
-            <div className="flex items-center gap-3 p-4">
-              <img src={freefireCard} alt="Free Fire" className="w-16 h-16 rounded-lg" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Free Fire</h3>
-                <p className="text-xs text-muted-foreground">© Pagamento 100% Seguro</p>
-              </div>
-              <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-              </div>
+          {/* Mini selected card */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full border border-primary">
+              <img src={freefireIcon} alt="Free Fire" className="w-5 h-5" />
+              <span className="text-sm font-medium text-foreground">Free Fire</span>
             </div>
+          </div>
+
+          {/* Main game banner */}
+          <div className="rounded-xl overflow-hidden">
+            <img src={freefireBanner} alt="Free Fire - Pago 100% seguro" className="w-full h-auto" />
           </div>
         </section>
 
@@ -190,7 +191,7 @@ const RechargeStrip: React.FC = () => {
 
                 {method.logo && (
                   <>
-                    <img src={method.logo} alt={method.name} className="h-6 mb-1 object-contain" />
+                    <img src={method.logo} alt={method.name} className="h-10 mb-1 object-contain max-w-[60px]" />
                     <span className="text-[10px] text-muted-foreground">{method.name}</span>
                   </>
                 )}
@@ -199,7 +200,7 @@ const RechargeStrip: React.FC = () => {
                   <>
                     <div className="flex gap-1 mb-1">
                       {method.logos.map((logo: string, idx: number) => (
-                        <img key={idx} src={logo} alt="" className="h-5 object-contain" />
+                        <img key={idx} src={logo} alt="" className="h-8 object-contain max-w-[45px]" />
                       ))}
                     </div>
                     <span className="text-[10px] text-muted-foreground">{method.name}</span>

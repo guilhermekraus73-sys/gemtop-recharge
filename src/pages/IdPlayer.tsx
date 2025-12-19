@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
-const membershipsBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
-const garenaLogo = "https://recargasdiamante.site/assets/garena-logo-new-BpIrME3Z.png";
-const freefireIcon = "https://recargasdiamante.site/assets/freefire-icon-B-2fWEW9.png";
-const diamondIcon = "https://recargasdiamante.site/assets/diamond-icon-DfkGj-iT.png";
+import membershipsBanner from "@/assets/memberships-banner.jpg";
+import garenaLogo from "@/assets/garena-logo.png";
+import freefireIcon from "@/assets/freefire-character.png";
+import diamondIcon from "@/assets/diamond-icon.png";
+import freefireBanner from "@/assets/freefire-banner.png";
 
 const IdPlayer: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
@@ -49,18 +50,9 @@ const IdPlayer: React.FC = () => {
             </div>
           </div>
 
-          {/* Main game card */}
-          <div className="game-card game-card-selected">
-            <div className="flex items-center gap-3 p-4">
-              <img src={freefireIcon} alt="Free Fire" className="w-16 h-16 rounded-lg" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Free Fire</h3>
-                <p className="text-xs text-muted-foreground">© Pagamento 100% Seguro</p>
-              </div>
-              <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-              </div>
-            </div>
+          {/* Main game banner */}
+          <div className="rounded-xl overflow-hidden">
+            <img src={freefireBanner} alt="Free Fire - Pago 100% seguro" className="w-full h-auto" />
           </div>
         </section>
 
