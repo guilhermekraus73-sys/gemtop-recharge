@@ -23,18 +23,28 @@ const PackagesSection = ({
       </div>
       
       <div className="grid grid-cols-3 gap-3 mb-4">
-        {packages.map(pkg => <div key={pkg.id} onClick={() => onSelectPackage(pkg.id)} className={`package-card text-center ${selectedPackage === pkg.id ? 'selected' : ''}`}>
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <img src={diamondIcon} alt="Diamond" className="w-4 h-4" />
-              <span className="font-bold text-foreground">{pkg.diamonds.toLocaleString()}</span>
+        {packages.map(pkg => (
+          <div 
+            key={pkg.id} 
+            onClick={() => onSelectPackage(pkg.id)} 
+            className={`package-card flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              selectedPackage === pkg.id 
+                ? 'border-primary bg-primary/5 shadow-md' 
+                : 'border-border bg-card hover:border-primary/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <img src={diamondIcon} alt="Diamond" className="w-5 h-5" />
+              <span className="font-bold text-lg text-foreground">{pkg.diamonds.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base font-semibold text-primary">
               {pkg.currency} {pkg.price.toFixed(2)}
             </p>
-            <p className="text-xs bonus-text font-medium">
+            <p className="text-xs text-green-600 font-medium mt-1">
               + Bônus {pkg.bonus.toLocaleString()}
             </p>
-          </div>)}
+          </div>
+        ))}
       </div>
       
       <p className="text-xs text-muted-foreground mb-3">
