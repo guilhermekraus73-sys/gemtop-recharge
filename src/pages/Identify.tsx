@@ -23,10 +23,13 @@ const Identify: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="header-white py-4 px-4">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <img src={garenaLogo} alt="Garena" className="h-8" />
-          <span className="font-semibold text-lg text-foreground">Centro Oficial de Recargas</span>
+      <header className="bg-white py-3 px-4 border-b border-border">
+        <div className="max-w-lg mx-auto flex items-center gap-2">
+          <img src={garenaLogo} alt="Garena" className="h-5" />
+          <div className="flex flex-col">
+            <span className="text-xs font-medium text-foreground leading-tight">Canal Oficial de</span>
+            <span className="text-xs font-medium text-foreground leading-tight">Recarga</span>
+          </div>
         </div>
       </header>
 
