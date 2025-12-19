@@ -233,7 +233,7 @@ const Recharge: React.FC = () => {
 
                 {method.logo && (
                   <>
-                    <img src={method.logo} alt={method.name} className="h-6 mb-1 object-contain" />
+                    <img src={method.logo} alt={method.name} className="h-10 mb-1 object-contain max-w-[60px]" />
                     <span className="text-[10px] text-muted-foreground">{method.name}</span>
                   </>
                 )}
@@ -242,7 +242,7 @@ const Recharge: React.FC = () => {
                   <>
                     <div className="flex gap-1 mb-1">
                       {method.logos.map((logo: string, idx: number) => (
-                        <img key={idx} src={logo} alt="" className="h-5 object-contain" />
+                        <img key={idx} src={logo} alt="" className="h-8 object-contain max-w-[45px]" />
                       ))}
                     </div>
                     <span className="text-[10px] text-muted-foreground">{method.name}</span>
