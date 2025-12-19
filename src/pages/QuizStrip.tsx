@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
-const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
+import freefireLogoBanner from "@/assets/freefire-logo-banner.png";
 type Question = {
   question: string;
   options: string[];
@@ -141,11 +141,13 @@ const QuizStrip: React.FC = () => {
   // Start Screen
   if (!started) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        {/* Logo outside the card */}
+        <div className="mb-6">
+          <img src={freefireLogoBanner} alt="Free Fire" className="h-20 md:h-24" />
+        </div>
+        
         <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
-          <div className="flex justify-center mb-4">
-            <img src={freefireLogo} alt="Free Fire" className="h-16" />
-          </div>
           <h1 className="text-2xl font-bold text-foreground text-center mb-2">
             Encuesta Free Fire
           </h1>
