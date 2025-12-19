@@ -7,9 +7,8 @@ import { Elements } from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
 import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
+import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-
-const membresiasBanner = "https://recargasdiamante.site/assets/memberships-banner-new-CLtuAl-k.jpg";
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
@@ -78,7 +77,7 @@ const Checkout9: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
           <img
-            src={membresiasBanner}
+            src={membershipsBanner}
             alt="¡Conoce las Membresías Free Fire!"
             className="w-full rounded-lg shadow-lg"
           />
