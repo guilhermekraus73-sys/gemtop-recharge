@@ -16,7 +16,6 @@ const Checkout9: React.FC = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
-  const [confirmEmail, setConfirmEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   useUtmifyStripePixel();
@@ -41,13 +40,8 @@ const Checkout9: React.FC = () => {
   }, []);
 
   const handleContinueToPayment = () => {
-    if (!email || !confirmEmail || !fullName) {
+    if (!email || !fullName) {
       toast.error('Por favor, complete todos los campos');
-      return;
-    }
-
-    if (email !== confirmEmail) {
-      toast.error('Los emails no coinciden');
       return;
     }
 
@@ -120,18 +114,6 @@ const Checkout9: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-foreground font-medium mb-2">Confirme seu email</label>
-                  <Input
-                    type="email"
-                    placeholder="Digite novamente seu email"
-                    value={confirmEmail}
-                    onChange={(e) => setConfirmEmail(e.target.value)}
-                    className="h-12 bg-muted border-border"
-                    required
-                  />
-                </div>
-
-                <div>
                   <label className="block text-foreground font-medium mb-2">Nome completo</label>
                   <Input
                     type="text"
@@ -145,7 +127,7 @@ const Checkout9: React.FC = () => {
 
                 <button
                   onClick={handleContinueToPayment}
-                  disabled={!email || !confirmEmail || !fullName}
+                  disabled={!email || !fullName}
                   className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continuar al pago
