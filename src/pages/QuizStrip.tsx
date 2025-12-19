@@ -155,8 +155,8 @@ const QuizStrip: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         {/* Logo outside the card */}
-        <div className="mb-6">
-          <img src={freefireLogoBanner} alt="Free Fire" className="h-20 md:h-24" />
+        <div className="mb-8">
+          <img src={freefireLogoBanner} alt="Free Fire" className="w-64 md:w-80 h-auto object-contain" />
         </div>
         
         <div className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
