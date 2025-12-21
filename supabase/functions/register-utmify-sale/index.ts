@@ -42,39 +42,44 @@ serve(async (req) => {
 
     console.log("[REGISTER-UTMIFY-SALE] Request received", { orderId, email, value, productName, trackingParams });
 
-    // Build UTMify API payload
+    // Format date as YYYY-MM-DD HH:MM:SS (UTC) - required by UTMify
+    const now = new Date();
+    const formattedDate = now.toISOString().replace('T', ' ').substring(0, 19);
+
+    // Build UTMify API payload according to official documentation
     const utmifyPayload = {
-      apiToken,
       orderId,
       platform: "Stripe",
-      paymentMethod: "CreditCard",
+      paymentMethod: "credit_card",
       status: "paid",
-      createdAt: new Date().toISOString(),
-      approvedDate: new Date().toISOString(),
+      createdAt: formattedDate,
+      approvedDate: formattedDate,
+      refundedAt: null,
       customer: {
         name: name || "Cliente",
         email: email || "",
-        phone: "",
-        document: "",
-        country: "BR",
+        phone: null,
+        document: null,
+        country: "US",
       },
       products: [
         {
           id: orderId,
           name: productName || "Diamantes Free Fire",
-          planId: "",
+          planId: null,
+          planName: null,
           quantity: 1,
           priceInCents: Math.round(value * 100),
         },
       ],
       trackingParameters: {
-        src: trackingParams?.src || leadId || "",
-        sck: trackingParams?.sck || "",
-        utm_source: trackingParams?.utm_source || "",
-        utm_medium: trackingParams?.utm_medium || "",
-        utm_campaign: trackingParams?.utm_campaign || "",
-        utm_content: trackingParams?.utm_content || "",
-        utm_term: trackingParams?.utm_term || "",
+        src: trackingParams?.src || leadId || null,
+        sck: trackingParams?.sck || null,
+        utm_source: trackingParams?.utm_source || null,
+        utm_medium: trackingParams?.utm_medium || null,
+        utm_campaign: trackingParams?.utm_campaign || null,
+        utm_content: trackingParams?.utm_content || null,
+        utm_term: trackingParams?.utm_term || null,
       },
       commission: {
         totalPriceInCents: Math.round(value * 100),
@@ -85,13 +90,14 @@ serve(async (req) => {
       isTest: false,
     };
 
-    console.log("[REGISTER-UTMIFY-SALE] Sending to UTMify API", { orderId, apiToken: apiToken ? "***" + apiToken.slice(-4) : "MISSING" });
+    console.log("[REGISTER-UTMIFY-SALE] Sending to UTMify API", { orderId, endpoint: "api-credentials/orders" });
 
-    // Send to UTMify API - apiToken is included in the payload body
-    const utmifyResponse = await fetch("https://api.utmify.com.br/api/v1/orders", {
+    // Send to UTMify API - correct endpoint with x-api-token header
+    const utmifyResponse = await fetch("https://api.utmify.com.br/api-credentials/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-token": apiToken,
       },
       body: JSON.stringify(utmifyPayload),
     });
