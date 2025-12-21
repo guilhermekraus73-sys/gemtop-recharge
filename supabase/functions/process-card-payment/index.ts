@@ -77,8 +77,6 @@ async function registerUtmifySale(data: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiToken}`,
-        "x-api-token": apiToken,
       },
       body: JSON.stringify(utmifyPayload),
     });
