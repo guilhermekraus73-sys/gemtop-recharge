@@ -31,38 +31,43 @@ async function registerUtmifySale(data: {
   try {
     console.log("[UTMIFY] Registering sale", { orderId: data.orderId, value: data.value });
 
+    // Format date as YYYY-MM-DD HH:MM:SS (UTC)
+    const now = new Date();
+    const formattedDate = now.toISOString().replace('T', ' ').substring(0, 19);
+
     const utmifyPayload = {
-      apiToken,
       orderId: data.orderId,
       platform: "Stripe",
-      paymentMethod: "CreditCard",
+      paymentMethod: "credit_card",
       status: "paid",
-      createdAt: new Date().toISOString(),
-      approvedDate: new Date().toISOString(),
+      createdAt: formattedDate,
+      approvedDate: formattedDate,
+      refundedAt: null,
       customer: {
         name: data.name || "Cliente",
         email: data.email || "",
-        phone: "",
-        document: "",
-        country: "BR",
+        phone: null,
+        document: null,
+        country: "US",
       },
       products: [
         {
           id: data.orderId,
           name: data.productName || "Diamantes Free Fire",
-          planId: "",
+          planId: null,
+          planName: null,
           quantity: 1,
           priceInCents: Math.round(data.value * 100),
         },
       ],
       trackingParameters: {
-        src: data.trackingParams?.src || "",
-        sck: data.trackingParams?.sck || "",
-        utm_source: data.trackingParams?.utm_source || "",
-        utm_medium: data.trackingParams?.utm_medium || "",
-        utm_campaign: data.trackingParams?.utm_campaign || "",
-        utm_content: data.trackingParams?.utm_content || "",
-        utm_term: data.trackingParams?.utm_term || "",
+        src: data.trackingParams?.src || null,
+        sck: data.trackingParams?.sck || null,
+        utm_source: data.trackingParams?.utm_source || null,
+        utm_medium: data.trackingParams?.utm_medium || null,
+        utm_campaign: data.trackingParams?.utm_campaign || null,
+        utm_content: data.trackingParams?.utm_content || null,
+        utm_term: data.trackingParams?.utm_term || null,
       },
       commission: {
         totalPriceInCents: Math.round(data.value * 100),
@@ -73,10 +78,11 @@ async function registerUtmifySale(data: {
       isTest: false,
     };
 
-    const response = await fetch("https://api.utmify.com.br/api/v1/orders", {
+    const response = await fetch("https://api.utmify.com.br/api-credentials/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-token": apiToken,
       },
       body: JSON.stringify(utmifyPayload),
     });
