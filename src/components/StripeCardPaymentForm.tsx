@@ -103,11 +103,13 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     };
   };
 
-  const registerUtmifySale = async (paymentIntentId: string) => {
+  // UTMify registration for 3D Secure payments (edge function can't register these)
+  // Non-3DS payments are registered by the edge function directly
+  const registerUtmifySaleFor3DS = async (paymentIntentId: string) => {
     try {
       const leadId = getUtmifyLeadId();
       const trackingParams = getUtmParams();
-      console.log('[UTMIFY] Registering sale', { paymentIntentId, leadId, trackingParams, amount });
+      console.log('[UTMIFY] Registering 3DS sale', { paymentIntentId, leadId, trackingParams, amount });
 
       await supabase.functions.invoke('register-utmify-sale', {
         body: {
@@ -123,10 +125,15 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         }
       });
       
-      console.log('[UTMIFY] Sale registered successfully');
+      console.log('[UTMIFY] 3DS sale registered successfully');
     } catch (error) {
-      console.error('[UTMIFY] Error registering sale:', error);
+      console.error('[UTMIFY] Error registering 3DS sale:', error);
     }
+  };
+
+  // Log for non-3DS payments (already registered by edge function)
+  const logPaymentSuccess = (paymentIntentId: string) => {
+    console.log('[UTMIFY] Payment succeeded, registration handled by edge function', { paymentIntentId });
   };
 
   // Initialize Payment Request (Apple Pay / Google Pay) - Run ASAP when stripe loads
@@ -188,13 +195,13 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
           if (paymentIntent?.status === 'succeeded') {
             ev.complete('success');
-            await registerUtmifySale(paymentIntent.id);
+            await registerUtmifySaleFor3DS(paymentIntent.id);
             toast.success('¡Pago realizado con éxito!');
             onSuccess();
           }
         } else if (data.success) {
           ev.complete('success');
-          await registerUtmifySale(data.paymentIntentId);
+          logPaymentSuccess(data.paymentIntentId);
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
         } else {
@@ -276,7 +283,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         }
 
         if (paymentIntent?.status === 'succeeded') {
-          await registerUtmifySale(paymentIntent.id);
+          await registerUtmifySaleFor3DS(paymentIntent.id);
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
           return;
@@ -285,7 +292,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
       if (data.success) {
         // Payment succeeded without 3DS
-        await registerUtmifySale(data.paymentIntentId);
+        logPaymentSuccess(data.paymentIntentId);
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       } else if (data.error) {
