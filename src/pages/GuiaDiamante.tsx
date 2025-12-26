@@ -261,6 +261,12 @@ const GuiaDiamante = () => {
           </div>
           
           <div className="space-y-2">
+            <p className="text-yellow-400 font-semibold">
+              📧 Soporte:{" "}
+              <a href="mailto:udirapha@hotmail.com" className="hover:underline">
+                udirapha@hotmail.com
+              </a>
+            </p>
             <p>
               <strong>Aviso Legal:</strong> Este producto es una guía informativa. 
               Free Fire es una marca registrada de Garena. No estamos afiliados con Garena.
