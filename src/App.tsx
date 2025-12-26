@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Quiz from "./pages/Quiz";
 import QuizStrip from "./pages/QuizStrip";
+import GuiaDiamante from "./pages/GuiaDiamante";
 import Identify from "./pages/Identify";
 import IdPlayer from "./pages/IdPlayer";
 import Recharge from "./pages/Recharge";
@@ -27,6 +28,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Quiz />} />
+          <Route path="/guia-diamante" element={<GuiaDiamante />} />
           <Route path="/quiz-strip" element={<QuizStrip />} />
           <Route path="/identificar" element={<Identify />} />
           <Route path="/id-player" element={<IdPlayer />} />
