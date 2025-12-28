@@ -45,13 +45,19 @@ const AutoTranslate = () => {
         
         // Auto-translate based on browser language
         setTimeout(() => {
-          const browserLang = navigator.language.split('-')[0];
+          const fullLang = navigator.language;
+          const browserLang = fullLang.split('-')[0];
+          console.log('🌍 Idioma detectado:', fullLang, '| Código:', browserLang);
+          
           if (browserLang !== 'pt') {
             const select = document.querySelector('.goog-te-combo') as HTMLSelectElement;
             if (select) {
               select.value = browserLang;
               select.dispatchEvent(new Event('change'));
+              console.log('🌍 Traduzindo para:', browserLang);
             }
+          } else {
+            console.log('🌍 Site já está em português, sem tradução necessária');
           }
         }, 1000);
       }
