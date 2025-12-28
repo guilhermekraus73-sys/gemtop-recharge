@@ -74,28 +74,15 @@ const AutoTranslate = () => {
       body {
         top: 0 !important;
       }
-      .goog-te-gadget {
-        color: transparent !important;
-        font-size: 0 !important;
-      }
-      .goog-te-combo {
-        background: hsl(var(--primary));
-        color: hsl(var(--primary-foreground));
-        border: none;
-        border-radius: 6px;
-        padding: 6px 12px;
-        font-size: 12px;
-        cursor: pointer;
-        font-family: inherit;
-      }
-      .skiptranslate iframe {
-        display: none !important;
-      }
+      .goog-te-gadget,
+      .goog-te-combo,
+      .skiptranslate iframe,
       #google_translate_element {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 9999;
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
       }
     `;
     document.head.appendChild(style);
