@@ -11,6 +11,13 @@ import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
 const stripePromise = loadStripe('pk_live_51RgA5gB9sqgsLmjQEL9BuqIpgq6ylDCYT8g5mDwhrX0QFWgJJVnSLNMDlbDz9hOCpEozc2PyJsreeULPfWoe2sqs00Yv9bZepT');
 
+// Detectar idioma do navegador para tradução do Stripe
+const getBrowserLocale = (): string => {
+  const lang = navigator.language.split('-')[0];
+  const supportedLocales = ['en', 'es', 'pt', 'fr', 'de', 'it', 'ja', 'zh'];
+  return supportedLocales.includes(lang) ? lang : 'auto';
+};
+
 const Checkout15: React.FC = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
@@ -115,7 +122,7 @@ const Checkout15: React.FC = () => {
             </div>
 
             {/* Payment Section */}
-            <Elements stripe={stripePromise}>
+            <Elements stripe={stripePromise} options={{ locale: getBrowserLocale() as any }}>
               <StripeCardPaymentForm 
                 priceKey={priceKey}
                 amount={priceUsd}
