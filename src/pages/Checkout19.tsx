@@ -97,10 +97,10 @@ const Checkout19: React.FC = () => {
             {/* Customer Info Form */}
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-foreground font-medium mb-2">Seu email</label>
+                <label className="block text-foreground font-medium mb-2">Tu correo electrónico</label>
                 <Input
                   type="email"
-                  placeholder="Digite seu email para receber a compra"
+                  placeholder="Ingresa tu correo para recibir la compra"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-muted border-border"
@@ -109,10 +109,10 @@ const Checkout19: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-foreground font-medium mb-2">Nome completo</label>
+                <label className="block text-foreground font-medium mb-2">Nombre completo</label>
                 <Input
                   type="text"
-                  placeholder="Digite seu nome completo"
+                  placeholder="Ingresa tu nombre completo"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="h-12 bg-muted border-border"

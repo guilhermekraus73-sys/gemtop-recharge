@@ -141,7 +141,7 @@ const RechargeStrip: React.FC = () => {
                 </div>
                 <p className="font-semibold text-primary">US$ {pkg.price.toFixed(2)}</p>
                 <p className="text-xs text-bonus font-medium">
-                  + Bônus {pkg.bonus.toLocaleString()}
+                  + Bonus {pkg.bonus.toLocaleString()}
                 </p>
               </button>
             ))}
