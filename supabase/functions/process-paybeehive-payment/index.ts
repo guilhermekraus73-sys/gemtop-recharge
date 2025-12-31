@@ -147,7 +147,10 @@ serve(async (req) => {
       customer: {
         name: name,
         email: email,
-        document: "00000000000", // Documento genérico para clientes internacionais
+        document: {
+          type: "cpf",
+          number: "00000000000",
+        },
       },
       items: [
         {
