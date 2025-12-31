@@ -124,9 +124,10 @@ serve(async (req) => {
 
     console.log("[PAYBEEHIVE] Creating transaction for amount:", priceData.amount);
 
-    // Create transaction with PayBeeHive
+    // Create transaction with PayBeeHive (USD - PayBeeHive converts to BRL)
     const transactionPayload = {
       amount: priceData.amount,
+      currency: "USD",
       paymentMethod: "credit_card",
       card: {
         number: cardNumber.replace(/\s/g, ""),
