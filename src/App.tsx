@@ -11,6 +11,7 @@ import IdPlayer from "./pages/IdPlayer";
 import Recharge from "./pages/Recharge";
 import RechargeStrip from "./pages/RechargeStrip";
 import Checkout from "./pages/Checkout";
+import Checkout1 from "./pages/Checkout1";
 import Checkout9 from "./pages/Checkout9";
 import Checkout15 from "./pages/Checkout15";
 import Checkout19 from "./pages/Checkout19";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/recharge" element={<Recharge />} />
           <Route path="/recharge-strip" element={<RechargeStrip />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout1" element={<Checkout1 />} />
           <Route path="/checkout9" element={<Checkout9 />} />
           <Route path="/checkout15" element={<Checkout15 />} />
           <Route path="/checkout19" element={<Checkout19 />} />
