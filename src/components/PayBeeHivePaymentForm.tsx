@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, Lock, CreditCard } from 'lucide-react';
+import { Shield, Lock, CreditCard, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useSearchParams } from 'react-router-dom';
 
 interface PayBeeHivePaymentFormProps {
   priceKey: string;
@@ -27,7 +28,15 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-  
+  const [searchParams] = useSearchParams();
+
+  // Check for payment failure from 3DS redirect
+  useEffect(() => {
+    const paymentFailed = searchParams.get('payment_failed');
+    if (paymentFailed === 'true') {
+      toast.error('La autenticación 3D Secure falló. Por favor, intente nuevamente.');
+    }
+  }, [searchParams]);
 
   // Get UTMify leadId from localStorage
   const getUtmifyLeadId = (): string => {
@@ -112,7 +121,10 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
       const trackingParams = getUtmParams();
       const [expMonth, expYear] = cardExpiry.split('/');
       
-      console.log('[PAYBEEHIVE] Submitting payment...');
+      // Get the current page URL for 3DS redirect
+      const returnUrl = window.location.origin;
+      
+      console.log('[PAYBEEHIVE] Submitting payment with 3DS support...');
 
       const { data, error } = await supabase.functions.invoke('process-paybeehive-payment', {
         body: {
@@ -125,6 +137,7 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
           cardExpYear: `20${expYear}`,
           cardCvv: cardCvv,
           trackingParams,
+          returnUrl, // Send return URL for 3DS redirect
         }
       });
 
@@ -134,6 +147,16 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
       }
 
       console.log('[PAYBEEHIVE] Response:', data);
+
+      // Check if 3DS authentication is required
+      if (data.requires3DS && data.threeDSUrl) {
+        console.log('[PAYBEEHIVE] Redirecting to 3DS authentication:', data.threeDSUrl);
+        toast.info('Redirigiendo para autenticación 3D Secure...');
+        
+        // Redirect to 3DS authentication page
+        window.location.href = data.threeDSUrl;
+        return;
+      }
 
       if (data.success) {
         toast.success('¡Pago realizado con éxito!');
@@ -160,6 +183,12 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
           <CreditCard className="w-5 h-5" />
           <span>Visa, Mastercard</span>
         </div>
+      </div>
+
+      {/* 3DS Notice */}
+      <div className="flex items-center gap-2 text-muted-foreground text-xs bg-muted/30 p-2 rounded-lg">
+        <ExternalLink className="w-4 h-4 shrink-0" />
+        <span>Tu banco puede solicitar autenticación adicional (3D Secure) para completar el pago.</span>
       </div>
 
       {/* Card Form */}
