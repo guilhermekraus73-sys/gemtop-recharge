@@ -2,22 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import { toast } from 'sonner';
-import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
+import PayBeeHivePaymentForm from '@/components/PayBeeHivePaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-
-const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
-
-// Detectar idioma do navegador para tradução do Stripe
-const getBrowserLocale = (): string => {
-  const lang = navigator.language.split('-')[0];
-  const supportedLocales = ['en', 'es', 'pt', 'fr', 'de', 'it', 'ja', 'zh'];
-  return supportedLocales.includes(lang) ? lang : 'auto';
-};
 
 const Checkout9: React.FC = () => {
   const navigate = useNavigate();
@@ -124,16 +112,14 @@ const Checkout9: React.FC = () => {
             </div>
 
             {/* Payment Section */}
-            <Elements stripe={stripePromise} options={{ locale: getBrowserLocale() as any }}>
-              <StripeCardPaymentForm 
-                priceKey={priceKey}
-                amount={priceUsd}
-                onSuccess={handlePaymentSuccess}
-                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-                customerEmail={email}
-                customerName={fullName}
-              />
-            </Elements>
+            <PayBeeHivePaymentForm 
+              priceKey={priceKey}
+              amount={priceUsd}
+              onSuccess={handlePaymentSuccess}
+              productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+              customerEmail={email}
+              customerName={fullName}
+            />
           </div>
         </div>
       </div>
