@@ -5,11 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price mapping for each package (amount in centavos BRL)
+// Price mapping for each package (amount in cents USD)
 const PRICES: Record<string, { amount: number; diamonds: number; description: string }> = {
-  "9": { amount: 4700, diamonds: 5600, description: "5600 Diamantes Free Fire" },      // R$ 47,00
-  "15": { amount: 8700, diamonds: 11200, description: "11200 Diamantes Free Fire" },   // R$ 87,00
-  "19": { amount: 9700, diamonds: 22400, description: "22400 Diamantes Free Fire" },   // R$ 97,00
+  "9": { amount: 900, diamonds: 5600, description: "5600 Diamantes Free Fire" },      // $9.00 USD
+  "15": { amount: 1590, diamonds: 11200, description: "11200 Diamantes Free Fire" },   // $15.90 USD
+  "19": { amount: 1900, diamonds: 22400, description: "22400 Diamantes Free Fire" },   // $19.00 USD
 };
 
 // Register sale with UTMify
