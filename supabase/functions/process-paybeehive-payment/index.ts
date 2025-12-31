@@ -149,7 +149,7 @@ serve(async (req) => {
         email: email,
         document: {
           type: "cpf",
-          number: "52998224725", // CPF válido para testes
+          number: "87329824020",
         },
       },
       items: [
