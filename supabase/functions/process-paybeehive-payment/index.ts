@@ -174,7 +174,7 @@ serve(async (req) => {
     console.log("[PAYBEEHIVE] Transaction result:", JSON.stringify(result));
 
     if (!response.ok) {
-      const errorMessage = result.message || result.error || "Erro ao processar pagamento";
+      const errorMessage = result.message || result.error || "Error al procesar el pago";
       console.error("[PAYBEEHIVE] Transaction failed:", errorMessage);
       return new Response(JSON.stringify({ 
         success: false, 
@@ -215,14 +215,14 @@ serve(async (req) => {
         pending: true,
         transactionId: result.id,
         status: result.status,
-        message: "Pagamento em processamento",
+        message: "Pago en procesamiento",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     } else {
       // Payment was refused
-      const refusedReason = result.refusedReason || "Pagamento recusado pela operadora";
+      const refusedReason = result.refusedReason || "Pago rechazado por la operadora";
       console.error("[PAYBEEHIVE] Payment refused:", refusedReason);
       return new Response(JSON.stringify({ 
         success: false, 
