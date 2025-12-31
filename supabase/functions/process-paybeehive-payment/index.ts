@@ -125,6 +125,12 @@ serve(async (req) => {
 
     console.log("[PAYBEEHIVE] Creating transaction for amount:", priceData.amount);
 
+    // Parse expiration month and year as integers
+    const expMonth = parseInt(cardExpMonth, 10);
+    const expYear = parseInt(cardExpYear, 10);
+
+    console.log("[PAYBEEHIVE] Parsed expiration:", { expMonth, expYear });
+
     // Create transaction with PayBeeHive (USD - PayBeeHive converts to BRL)
     const transactionPayload = {
       amount: priceData.amount,
@@ -133,8 +139,8 @@ serve(async (req) => {
       card: {
         number: cardNumber.replace(/\s/g, ""),
         holderName: cardHolderName,
-        expirationMonth: cardExpMonth,
-        expirationYear: cardExpYear,
+        expirationMonth: expMonth,
+        expirationYear: expYear,
         cvv: cardCvv,
       },
       installments: 1,
