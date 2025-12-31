@@ -104,11 +104,10 @@ serve(async (req) => {
       cardExpMonth, 
       cardExpYear, 
       cardCvv,
-      cpf,
       trackingParams 
     } = await req.json();
     
-    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name, cpf: cpf ? "***" : "missing" });
+    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name });
 
     const priceData = PRICES[priceKey];
     if (!priceData) {
@@ -140,10 +139,6 @@ serve(async (req) => {
       customer: {
         name: name,
         email: email,
-        document: {
-          type: "cpf",
-          number: cpf.replace(/\D/g, ""),
-        },
       },
       items: [
         {

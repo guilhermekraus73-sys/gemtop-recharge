@@ -27,7 +27,7 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-  const [cpf, setCpf] = useState('');
+  
 
   // Get UTMify leadId from localStorage
   const getUtmifyLeadId = (): string => {
@@ -91,21 +91,12 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
     return cleaned;
   };
 
-  // Format CPF
-  const formatCpf = (value: string) => {
-    const cleaned = value.replace(/\D/g, '').slice(0, 11);
-    if (cleaned.length <= 3) return cleaned;
-    if (cleaned.length <= 6) return cleaned.slice(0, 3) + '.' + cleaned.slice(3);
-    if (cleaned.length <= 9) return cleaned.slice(0, 3) + '.' + cleaned.slice(3, 6) + '.' + cleaned.slice(6);
-    return cleaned.slice(0, 3) + '.' + cleaned.slice(3, 6) + '.' + cleaned.slice(6, 9) + '-' + cleaned.slice(9);
-  };
 
   const isFormComplete = 
     cardholderName.length >= 3 && 
     cardNumber.replace(/\s/g, '').length === 16 && 
     cardExpiry.length === 5 && 
-    cardCvv.length >= 3 &&
-    cpf.replace(/\D/g, '').length === 11;
+    cardCvv.length >= 3;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +124,6 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
           cardExpMonth: expMonth,
           cardExpYear: `20${expYear}`,
           cardCvv: cardCvv,
-          cpf: cpf,
           trackingParams,
         }
       });
@@ -189,20 +179,6 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
           />
         </div>
 
-        {/* CPF */}
-        <div className="space-y-2">
-          <label className="block text-foreground font-medium text-sm">
-            CPF
-          </label>
-          <Input
-            type="text"
-            placeholder="000.000.000-00"
-            value={cpf}
-            onChange={(e) => setCpf(formatCpf(e.target.value))}
-            className="h-12 bg-white text-black border-gray-300"
-            required
-          />
-        </div>
 
         {/* Card Number */}
         <div className="space-y-2">
