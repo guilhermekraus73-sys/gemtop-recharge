@@ -108,9 +108,11 @@ serve(async (req) => {
       cardCvv,
       trackingParams,
       returnUrl, // URL to redirect after 3DS authentication
+      // Browser data for 3DS authentication
+      browserData,
     } = requestBody;
     
-    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name, hasReturnUrl: !!returnUrl });
+    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name, hasReturnUrl: !!returnUrl, hasBrowserData: !!browserData });
 
     const priceData = PRICES[priceKey];
     if (!priceData) {
@@ -138,8 +140,8 @@ serve(async (req) => {
     const successUrl = `${baseUrl}/thank-you?diamonds=${priceData.diamonds}`;
     const failureUrl = `${baseUrl}/checkout1?payment_failed=true`;
 
-    // Create transaction with PayBeeHive with 3DS enabled
-    const transactionPayload = {
+    // Create transaction with PayBeeHive - try without 3DS first, API will redirect if needed
+    const transactionPayload: Record<string, unknown> = {
       amount: priceData.amount,
       currency: "USD",
       paymentMethod: "credit_card",
@@ -168,22 +170,34 @@ serve(async (req) => {
           tangible: false,
         },
       ],
-      // 3DS Configuration - enable 3D Secure with redirect URLs
-      threeDSecure: {
-        enabled: true,
-        redirectUrl: successUrl,
-        failureUrl: failureUrl,
-      },
-      // Alternative 3DS config format (some APIs use this)
+      // URLs for redirect after payment
       postbackUrl: successUrl,
       returnUrl: successUrl,
-      metadata: JSON.stringify({
-        price_key: priceKey,
-        diamonds: priceData.diamonds,
-        email: email,
-        name: name,
-      }),
+      async: false, // Synchronous transaction to get redirect URL if 3DS required
     };
+
+    // Only add 3DS data if browser data is provided
+    if (browserData) {
+      transactionPayload.threeDSecure = {
+        mpi: {
+          version: "2.1.0",
+          // Browser data for 3DS challenge
+          browserAcceptHeader: browserData.acceptHeader || "*/*",
+          browserColorDepth: browserData.colorDepth || "24",
+          browserIP: browserData.ip || "",
+          browserJavaEnabled: browserData.javaEnabled || false,
+          browserLanguage: browserData.language || "pt-BR",
+          browserScreenHeight: browserData.screenHeight || "1080",
+          browserScreenWidth: browserData.screenWidth || "1920",
+          browserTZ: browserData.timezone || "-180",
+          browserUserAgent: browserData.userAgent || "",
+        },
+        successUrl: successUrl,
+        failureUrl: failureUrl,
+      };
+    }
+
+    console.log("[PAYBEEHIVE] Transaction payload:", JSON.stringify(transactionPayload, null, 2));
 
     console.log("[PAYBEEHIVE] Sending transaction to PayBeeHive API with 3DS...");
     console.log("[PAYBEEHIVE] 3DS URLs:", { successUrl, failureUrl });

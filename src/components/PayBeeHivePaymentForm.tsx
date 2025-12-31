@@ -124,6 +124,18 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
       // Get the current page URL for 3DS redirect
       const returnUrl = window.location.origin;
       
+      // Collect browser data for 3DS authentication
+      const browserData = {
+        acceptHeader: '*/*',
+        colorDepth: String(window.screen.colorDepth || 24),
+        javaEnabled: false,
+        language: navigator.language || 'pt-BR',
+        screenHeight: String(window.screen.height || 1080),
+        screenWidth: String(window.screen.width || 1920),
+        timezone: String(new Date().getTimezoneOffset()),
+        userAgent: navigator.userAgent,
+      };
+      
       console.log('[PAYBEEHIVE] Submitting payment with 3DS support...');
 
       const { data, error } = await supabase.functions.invoke('process-paybeehive-payment', {
@@ -137,7 +149,8 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
           cardExpYear: `20${expYear}`,
           cardCvv: cardCvv,
           trackingParams,
-          returnUrl, // Send return URL for 3DS redirect
+          returnUrl,
+          browserData, // Send browser data for 3DS
         }
       });
 
