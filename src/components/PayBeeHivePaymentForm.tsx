@@ -139,7 +139,7 @@ const PayBeeHivePaymentForm: React.FC<PayBeeHivePaymentFormProps> = ({
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       } else if (data.pending) {
-        toast.info('Pagamento em processamento. Você receberá uma confirmação em breve.');
+        toast.info('Pago en procesamiento. Recibirás una confirmación pronto.');
         onSuccess();
       } else {
         toast.error(data.error || 'Tarjeta rechazada. Intente con otra tarjeta.');
