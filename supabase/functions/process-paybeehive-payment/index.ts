@@ -96,6 +96,7 @@ serve(async (req) => {
   }
 
   try {
+    const requestBody = await req.json();
     const { 
       priceKey, 
       email, 
@@ -105,10 +106,11 @@ serve(async (req) => {
       cardExpMonth, 
       cardExpYear, 
       cardCvv,
-      trackingParams 
-    } = await req.json();
+      trackingParams,
+      returnUrl, // URL to redirect after 3DS authentication
+    } = requestBody;
     
-    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name });
+    console.log("[PAYBEEHIVE] Request received", { priceKey, email, name, hasReturnUrl: !!returnUrl });
 
     const priceData = PRICES[priceKey];
     if (!priceData) {
@@ -131,7 +133,12 @@ serve(async (req) => {
 
     console.log("[PAYBEEHIVE] Parsed expiration:", { expMonth, expYear });
 
-    // Create transaction with PayBeeHive (USD - PayBeeHive converts to BRL)
+    // Build the return URL for 3DS redirect
+    const baseUrl = returnUrl || "https://wzalbseskuzaieeogomm.lovableproject.com";
+    const successUrl = `${baseUrl}/thank-you?diamonds=${priceData.diamonds}`;
+    const failureUrl = `${baseUrl}/checkout1?payment_failed=true`;
+
+    // Create transaction with PayBeeHive with 3DS enabled
     const transactionPayload = {
       amount: priceData.amount,
       currency: "USD",
@@ -161,13 +168,25 @@ serve(async (req) => {
           tangible: false,
         },
       ],
+      // 3DS Configuration - enable 3D Secure with redirect URLs
+      threeDSecure: {
+        enabled: true,
+        redirectUrl: successUrl,
+        failureUrl: failureUrl,
+      },
+      // Alternative 3DS config format (some APIs use this)
+      postbackUrl: successUrl,
+      returnUrl: successUrl,
       metadata: JSON.stringify({
         price_key: priceKey,
         diamonds: priceData.diamonds,
+        email: email,
+        name: name,
       }),
     };
 
-    console.log("[PAYBEEHIVE] Sending transaction to PayBeeHive API...");
+    console.log("[PAYBEEHIVE] Sending transaction to PayBeeHive API with 3DS...");
+    console.log("[PAYBEEHIVE] 3DS URLs:", { successUrl, failureUrl });
 
     const response = await fetch("https://api.conta.paybeehive.com.br/v1/transactions", {
       method: "POST",
@@ -197,6 +216,31 @@ serve(async (req) => {
       });
     }
 
+    // Check for 3DS redirect URL in response
+    // Different payment APIs return 3DS URLs in different fields
+    const threeDSUrl = result.threeDSecureUrl || 
+                       result.authenticationUrl || 
+                       result.redirectUrl || 
+                       result.payment_url ||
+                       result.secure_url ||
+                       result.authentication?.url ||
+                       result.threeDSecure?.url;
+
+    if (threeDSUrl) {
+      console.log("[PAYBEEHIVE] 3DS Authentication required, redirect URL:", threeDSUrl);
+      return new Response(JSON.stringify({ 
+        success: true,
+        requires3DS: true,
+        threeDSUrl: threeDSUrl,
+        transactionId: result.id,
+        status: result.status,
+        message: "Redirigiendo para autenticación 3D Secure",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Check transaction status
     if (result.status === "paid" || result.status === "authorized") {
       console.log("[PAYBEEHIVE] Payment successful! Transaction ID:", result.id);
@@ -219,8 +263,27 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
-    } else if (result.status === "processing" || result.status === "pending") {
-      console.log("[PAYBEEHIVE] Payment is processing...");
+    } else if (result.status === "processing" || result.status === "pending" || result.status === "waiting_payment") {
+      console.log("[PAYBEEHIVE] Payment is processing/pending...");
+      
+      // Check if there's an authentication URL for pending payments
+      const pendingAuthUrl = result.links?.find((l: any) => l.rel === "authentication")?.href ||
+                             result.actions?.authentication ||
+                             result.secure_url;
+      
+      if (pendingAuthUrl) {
+        return new Response(JSON.stringify({ 
+          success: true,
+          requires3DS: true,
+          threeDSUrl: pendingAuthUrl,
+          transactionId: result.id,
+          status: result.status,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         success: true,
         pending: true,
@@ -233,7 +296,7 @@ serve(async (req) => {
       });
     } else {
       // Payment was refused
-      const refusedReason = result.refusedReason || "Pago rechazado por la operadora";
+      const refusedReason = result.refusedReason || result.refuse_reason || "Pago rechazado por la operadora";
       console.error("[PAYBEEHIVE] Payment refused:", refusedReason);
       return new Response(JSON.stringify({ 
         success: false, 
