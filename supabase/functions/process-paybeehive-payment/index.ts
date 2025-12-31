@@ -7,9 +7,10 @@ const corsHeaders = {
 
 // Price mapping for each package (amount in cents USD)
 const PRICES: Record<string, { amount: number; diamonds: number; description: string }> = {
-  "9": { amount: 900, diamonds: 5600, description: "5600 Diamantes Free Fire" },      // $9.00 USD
-  "15": { amount: 1590, diamonds: 11200, description: "11200 Diamantes Free Fire" },   // $15.90 USD
-  "19": { amount: 1900, diamonds: 22400, description: "22400 Diamantes Free Fire" },   // $19.00 USD
+  "1": { amount: 100, diamonds: 100, description: "100 Diamantes Free Fire" },           // $1.00 USD (test)
+  "9": { amount: 900, diamonds: 5600, description: "5600 Diamantes Free Fire" },         // $9.00 USD
+  "15": { amount: 1590, diamonds: 11200, description: "11200 Diamantes Free Fire" },     // $15.90 USD
+  "19": { amount: 1900, diamonds: 22400, description: "22400 Diamantes Free Fire" },     // $19.00 USD
 };
 
 // Register sale with UTMify
