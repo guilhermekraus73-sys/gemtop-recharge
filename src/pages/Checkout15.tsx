@@ -9,7 +9,7 @@ import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
-const stripePromise = loadStripe('pk_live_51RgA5gB9sqgsLmjQEL9BuqIpgq6ylDCYT8g5mDwhrX0QFWgJJVnSLNMDlbDz9hOCpEozc2PyJsreeULPfWoe2sqs00Yv9bZepT');
+const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
 // Detectar idioma do navegador para tradução do Stripe
 const getBrowserLocale = (): string => {
