@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import PayBeeHivePaymentForm from '@/components/PayBeeHivePaymentForm';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
+
+const stripePromise = loadStripe('pk_live_51ScCH3DSZSnaeaRa2WyJPUdKKK62PnYNcLAVmvJKaK6cuvMd5t20xPDw0HQO2zp95xxSBOfz9GlKPG6QBNPYpDXi00LjjNpUAb');
 
 const Checkout15: React.FC = () => {
   const navigate = useNavigate();
@@ -110,15 +114,17 @@ const Checkout15: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Section */}
-            <PayBeeHivePaymentForm 
-              priceKey={priceKey}
-              amount={priceUsd}
-              onSuccess={handlePaymentSuccess}
-              productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-              customerEmail={email}
-              customerName={fullName}
-            />
+            {/* Payment Section with Stripe */}
+            <Elements stripe={stripePromise}>
+              <StripeCardPaymentForm 
+                priceKey={priceKey}
+                amount={priceUsd}
+                onSuccess={handlePaymentSuccess}
+                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                customerEmail={email}
+                customerName={fullName}
+              />
+            </Elements>
           </div>
         </div>
       </div>
