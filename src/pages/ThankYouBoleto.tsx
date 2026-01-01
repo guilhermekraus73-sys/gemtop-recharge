@@ -1,8 +1,10 @@
 import { CheckCircle, Diamond, Clock, Shield } from "lucide-react";
+import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
 const ThankYouBoleto = () => {
+  useUtmifyHotmartPixel();
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 py-6">
       {/* Logo */}

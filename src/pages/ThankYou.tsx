@@ -1,4 +1,5 @@
 import { CheckCircle, Diamond, Gift, Clock, AlertTriangle, Sparkles, BookOpen } from "lucide-react";
+import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
@@ -8,6 +9,7 @@ const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQo
 // No need for duplicate registration here
 
 const ThankYou = () => {
+  useUtmifyHotmartPixel();
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <main className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
