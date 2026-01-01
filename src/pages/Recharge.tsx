@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -42,6 +43,7 @@ const Recharge: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [selectedPayment, setSelectedPayment] = useState("credit");
   const [searchParams] = useSearchParams();
+  useUtmifyHotmartPixel();
 
   const handleContinue = () => {
     if (!selectedPackage) {

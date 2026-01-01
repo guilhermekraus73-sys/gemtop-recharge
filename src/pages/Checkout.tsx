@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useUtmifyHotmartPixel } from '@/hooks/useUtmifyHotmartPixel';
 import { CreditCard, Clock, Shield, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const Checkout: React.FC = () => {
   const [searchParams] = useSearchParams();
   const packageId = searchParams.get('id') || 'oferta1';
   const selectedPackage = packages[packageId] || packages['oferta1'];
+  useUtmifyHotmartPixel();
 
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [fullName, setFullName] = useState('');
