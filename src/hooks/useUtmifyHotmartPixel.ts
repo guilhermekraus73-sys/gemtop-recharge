@@ -21,7 +21,6 @@ export const useUtmifyHotmartPixel = () => {
     utmsScript.setAttribute("async", "");
     utmsScript.setAttribute("defer", "");
     utmsScript.setAttribute("src", "https://cdn.utmify.com.br/scripts/utms/latest.js");
-    utmsScript.setAttribute("data-utmify-prevent-xcod-sck", "");
     utmsScript.setAttribute("data-utmify-prevent-subids", "");
     utmsScript.id = "utmify-utms-hotmart";
     
