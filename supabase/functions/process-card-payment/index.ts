@@ -8,6 +8,7 @@ const corsHeaders = {
 
 // Price mapping for each package (amount in cents)
 const PRICES: Record<string, { amount: number; diamonds: number }> = {
+  "1": { amount: 100, diamonds: 2800 },      // $1.00
   "9": { amount: 900, diamonds: 5600 },      // $9.00
   "15": { amount: 1590, diamonds: 11200 },   // $15.90
   "19": { amount: 1900, diamonds: 22400 },   // $19.00
