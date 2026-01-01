@@ -9,7 +9,7 @@ import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
-const stripePromise = loadStripe('pk_live_51ScCH3DSZSnaeaRa2WyJPUdKKK62PnYNcLAVmvJKaK6cuvMd5t20xPDw0HQO2zp95xxSBOfz9GlKPG6QBNPYpDXi00LjjNpUAb');
+const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
 const Checkout9: React.FC = () => {
   const navigate = useNavigate();
