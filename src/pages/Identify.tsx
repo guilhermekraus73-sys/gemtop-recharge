@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -11,6 +12,7 @@ const Identify: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  useUtmifyHotmartPixel();
 
   const handleValidate = () => {
     if (!playerId.trim()) {

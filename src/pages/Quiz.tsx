@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
 
 import freefireLogoBanner from "@/assets/freefire-logo.png";
 import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
@@ -86,6 +87,7 @@ const questions: Question[] = [
 const Quiz: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useUtmifyHotmartPixel();
 
   const getNavigationPath = (basePath: string) => {
     return basePath + location.search;
