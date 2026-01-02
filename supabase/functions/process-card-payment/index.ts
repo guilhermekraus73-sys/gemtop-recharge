@@ -11,6 +11,8 @@ const corsHeaders = {
 const MAX_ATTEMPTS_PER_IP = 5;          // Max attempts per IP in time window
 const MAX_ATTEMPTS_PER_EMAIL = 5;       // Max attempts per email in time window
 const MAX_ATTEMPTS_PER_CARD = 2;        // Max attempts per card (last 4 digits) in time window
+const MAX_DIFFERENT_CARDS_PER_IP = 3;   // Max different cards per IP (fraud detection)
+const MAX_DIFFERENT_CARDS_PER_EMAIL = 3; // Max different cards per email (fraud detection)
 const TIME_WINDOW_MINUTES = 10;         // Time window in minutes
 
 // Price mapping for each package (amount in cents)
@@ -74,8 +76,30 @@ async function checkRateLimits(
       console.log(`[RATE-LIMIT] IP ${ip} blocked - ${ipCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
       return { 
         allowed: false, 
-        reason: `Muitas tentativas deste endereço. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+        reason: `Pagamento temporariamente indisponível. Tente novamente mais tarde.` 
       };
+    }
+
+    // Check different cards per IP (fraud detection)
+    const { data: ipCards, error: ipCardsError } = await supabase
+      .from("payment_attempts")
+      .select("card_last4")
+      .eq("ip_address", ip)
+      .not("card_last4", "is", null)
+      .gte("created_at", timeWindowStart);
+
+    if (ipCardsError) {
+      console.error("[RATE-LIMIT] Error checking IP cards:", ipCardsError);
+    } else if (ipCards) {
+      const uniqueCards = new Set(ipCards.map(r => r.card_last4).filter(Boolean));
+      // If this would be a new card and already at limit
+      if (cardLast4 && !uniqueCards.has(cardLast4) && uniqueCards.size >= MAX_DIFFERENT_CARDS_PER_IP) {
+        console.log(`[RATE-LIMIT] IP ${ip} blocked - ${uniqueCards.size} different cards tried`);
+        return { 
+          allowed: false, 
+          reason: `Pagamento temporariamente indisponível. Tente novamente mais tarde.` 
+        };
+      }
     }
 
     // Check email attempts
@@ -92,8 +116,30 @@ async function checkRateLimits(
         console.log(`[RATE-LIMIT] Email ${email} blocked - ${emailCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
         return { 
           allowed: false, 
-          reason: `Muitas tentativas com este e-mail. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+          reason: `Pagamento temporariamente indisponível. Tente novamente mais tarde.` 
         };
+      }
+
+      // Check different cards per email (fraud detection)
+      const { data: emailCards, error: emailCardsError } = await supabase
+        .from("payment_attempts")
+        .select("card_last4")
+        .eq("email", email.toLowerCase())
+        .not("card_last4", "is", null)
+        .gte("created_at", timeWindowStart);
+
+      if (emailCardsError) {
+        console.error("[RATE-LIMIT] Error checking email cards:", emailCardsError);
+      } else if (emailCards) {
+        const uniqueCards = new Set(emailCards.map(r => r.card_last4).filter(Boolean));
+        // If this would be a new card and already at limit
+        if (cardLast4 && !uniqueCards.has(cardLast4) && uniqueCards.size >= MAX_DIFFERENT_CARDS_PER_EMAIL) {
+          console.log(`[RATE-LIMIT] Email ${email} blocked - ${uniqueCards.size} different cards tried`);
+          return { 
+            allowed: false, 
+            reason: `Pagamento temporariamente indisponível. Tente novamente mais tarde.` 
+          };
+        }
       }
     }
 
@@ -111,7 +157,7 @@ async function checkRateLimits(
         console.log(`[RATE-LIMIT] Card ****${cardLast4} blocked - ${cardCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
         return { 
           allowed: false, 
-          reason: `Muitas tentativas com este cartão. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+          reason: `Pagamento temporariamente indisponível. Tente novamente mais tarde.` 
         };
       }
     }
