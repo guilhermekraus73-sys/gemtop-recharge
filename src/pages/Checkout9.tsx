@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -11,16 +11,51 @@ import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
+// Email validation regex
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
+
 const Checkout9: React.FC = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
   useUtmifyStripePixel();
 
   const priceKey = '9';
   const priceUsd = 9.00;
   const diamonds = 5600;
+
+  // Validate email when it changes
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailTouched) {
+      if (!value.trim()) {
+        setEmailError('El correo electrónico es obligatorio');
+      } else if (!isValidEmail(value)) {
+        setEmailError('Ingresa un correo electrónico válido');
+      } else {
+        setEmailError('');
+      }
+    }
+  };
+
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    if (!email.trim()) {
+      setEmailError('El correo electrónico es obligatorio');
+    } else if (!isValidEmail(email)) {
+      setEmailError('Ingresa un correo electrónico válido');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const isFormValid = isValidEmail(email) && fullName.trim().length > 0;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -96,10 +131,17 @@ const Checkout9: React.FC = () => {
                   type="email"
                   placeholder="Ingresa tu correo para recibir la compra"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 bg-muted border-border"
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  onBlur={handleEmailBlur}
+                  className={`h-12 bg-muted border-border ${emailError ? 'border-red-500 focus:border-red-500' : ''}`}
                   required
                 />
+                {emailError && (
+                  <p className="flex items-center gap-1 text-red-500 text-sm mt-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -115,17 +157,25 @@ const Checkout9: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Section with Stripe */}
-            <Elements stripe={stripePromise}>
-              <StripeCardPaymentForm 
-                priceKey={priceKey}
-                amount={priceUsd}
-                onSuccess={handlePaymentSuccess}
-                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-                customerEmail={email}
-                customerName={fullName}
-              />
-            </Elements>
+            {/* Payment Section with Stripe - only show if form is valid */}
+            {isFormValid ? (
+              <Elements stripe={stripePromise}>
+                <StripeCardPaymentForm 
+                  priceKey={priceKey}
+                  amount={priceUsd}
+                  onSuccess={handlePaymentSuccess}
+                  productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                  customerEmail={email.trim()}
+                  customerName={fullName}
+                />
+              </Elements>
+            ) : (
+              <div className="bg-muted/50 border border-border rounded-xl p-6 text-center">
+                <p className="text-muted-foreground">
+                  Completa tu correo electrónico y nombre para continuar con el pago
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
