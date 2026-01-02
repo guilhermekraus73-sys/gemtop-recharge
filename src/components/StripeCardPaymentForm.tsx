@@ -9,7 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, Lock } from 'lucide-react';
+import { Shield, Lock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { PaymentRequest } from '@stripe/stripe-js';
@@ -37,6 +37,39 @@ const elementStyle = {
   },
 };
 
+// Rate limiting constants
+const MAX_ATTEMPTS_PER_CARD = 2;
+const MAX_TOTAL_ATTEMPTS = 3;
+const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+// Get or initialize session payment attempts from sessionStorage
+const getPaymentAttempts = () => {
+  try {
+    const data = sessionStorage.getItem('payment_attempts');
+    if (data) {
+      const parsed = JSON.parse(data);
+      // Check if lockout has expired
+      if (parsed.lockedUntil && Date.now() > parsed.lockedUntil) {
+        // Reset after lockout expires
+        sessionStorage.removeItem('payment_attempts');
+        return { totalAttempts: 0, cardAttempts: {}, lockedUntil: null };
+      }
+      return parsed;
+    }
+  } catch (e) {
+    console.log('Could not read payment attempts from sessionStorage');
+  }
+  return { totalAttempts: 0, cardAttempts: {}, lockedUntil: null };
+};
+
+const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Record<string, number>; lockedUntil: number | null }) => {
+  try {
+    sessionStorage.setItem('payment_attempts', JSON.stringify(attempts));
+  } catch (e) {
+    console.log('Could not save payment attempts to sessionStorage');
+  }
+};
+
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
   priceKey,
   amount, 
@@ -54,8 +87,96 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [canMakePayment, setCanMakePayment] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockTimeRemaining, setBlockTimeRemaining] = useState(0);
 
   const isFormComplete = cardholderName && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
+
+  // Check if user is blocked on mount and update timer
+  useEffect(() => {
+    const checkBlockStatus = () => {
+      const attempts = getPaymentAttempts();
+      if (attempts.lockedUntil && Date.now() < attempts.lockedUntil) {
+        setIsBlocked(true);
+        setBlockTimeRemaining(Math.ceil((attempts.lockedUntil - Date.now()) / 1000));
+      } else if (attempts.totalAttempts >= MAX_TOTAL_ATTEMPTS) {
+        // Lock the user
+        const lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+        savePaymentAttempts({ ...attempts, lockedUntil });
+        setIsBlocked(true);
+        setBlockTimeRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+      } else {
+        setIsBlocked(false);
+        setBlockTimeRemaining(0);
+      }
+    };
+
+    checkBlockStatus();
+    
+    // Update countdown every second if blocked
+    const interval = setInterval(() => {
+      const attempts = getPaymentAttempts();
+      if (attempts.lockedUntil) {
+        const remaining = attempts.lockedUntil - Date.now();
+        if (remaining > 0) {
+          setBlockTimeRemaining(Math.ceil(remaining / 1000));
+          setIsBlocked(true);
+        } else {
+          setIsBlocked(false);
+          setBlockTimeRemaining(0);
+          sessionStorage.removeItem('payment_attempts');
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Function to record a payment attempt
+  const recordPaymentAttempt = (cardLast4: string): boolean => {
+    const attempts = getPaymentAttempts();
+    
+    // Check if already blocked
+    if (attempts.lockedUntil && Date.now() < attempts.lockedUntil) {
+      return false;
+    }
+
+    // Increment total attempts
+    attempts.totalAttempts += 1;
+    
+    // Increment card-specific attempts
+    attempts.cardAttempts[cardLast4] = (attempts.cardAttempts[cardLast4] || 0) + 1;
+
+    // Check limits
+    const cardAttemptsForThis = attempts.cardAttempts[cardLast4];
+    
+    if (cardAttemptsForThis > MAX_ATTEMPTS_PER_CARD) {
+      toast.error('Máximo de intentos con esta tarjeta alcanzado');
+      attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      savePaymentAttempts(attempts);
+      setIsBlocked(true);
+      setBlockTimeRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+      return false;
+    }
+
+    if (attempts.totalAttempts >= MAX_TOTAL_ATTEMPTS) {
+      attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      savePaymentAttempts(attempts);
+      setIsBlocked(true);
+      setBlockTimeRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+      return false;
+    }
+
+    savePaymentAttempts(attempts);
+    return true;
+  };
+
+  // Function to clear attempts on success
+  const clearPaymentAttempts = () => {
+    sessionStorage.removeItem('payment_attempts');
+    setIsBlocked(false);
+    setBlockTimeRemaining(0);
+  };
 
   // Get UTMify leadId from localStorage
   const getUtmifyLeadId = (): string => {
@@ -225,6 +346,12 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if blocked before processing
+    if (isBlocked) {
+      toast.error('Pagamento temporariamente indisponível. Tente novamente em alguns minutos.');
+      return;
+    }
+
     if (!stripe || !elements) {
       return;
     }
@@ -250,6 +377,15 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
       if (pmError) {
         toast.error(pmError.message || 'Error al procesar la tarjeta');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Get card last 4 digits for rate limiting
+      const cardLast4 = paymentMethod.card?.last4 || 'unknown';
+      
+      // Record attempt and check if allowed
+      if (!recordPaymentAttempt(cardLast4)) {
         setIsProcessing(false);
         return;
       }
@@ -283,6 +419,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         }
 
         if (paymentIntent?.status === 'succeeded') {
+          clearPaymentAttempts();
           await registerUtmifySaleFor3DS(paymentIntent.id);
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
@@ -291,7 +428,8 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       }
 
       if (data.success) {
-        // Payment succeeded without 3DS
+        // Payment succeeded without 3DS - clear attempts
+        clearPaymentAttempts();
         logPaymentSuccess(data.paymentIntentId);
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
@@ -306,6 +444,36 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       setIsProcessing(false);
     }
   };
+
+  // Format remaining time
+  const formatTimeRemaining = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // If blocked, show blocked message
+  if (isBlocked) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 text-center">
+          <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-destructive mb-2">
+            Pagamento temporariamente indisponível
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Muitas tentativas de pagamento foram detectadas. Por segurança, aguarde alguns minutos antes de tentar novamente.
+          </p>
+          <div className="text-2xl font-mono font-bold text-destructive">
+            {formatTimeRemaining(blockTimeRemaining)}
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Tempo restante para tentar novamente
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
