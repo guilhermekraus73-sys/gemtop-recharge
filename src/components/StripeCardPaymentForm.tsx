@@ -40,6 +40,7 @@ const elementStyle = {
 // Rate limiting constants
 const MAX_ATTEMPTS_PER_CARD = 2;
 const MAX_TOTAL_ATTEMPTS = 3;
+const MAX_DIFFERENT_CARDS = 3; // Max different cards per session
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 // Get or initialize session payment attempts from sessionStorage
@@ -52,17 +53,21 @@ const getPaymentAttempts = () => {
       if (parsed.lockedUntil && Date.now() > parsed.lockedUntil) {
         // Reset after lockout expires
         sessionStorage.removeItem('payment_attempts');
-        return { totalAttempts: 0, cardAttempts: {}, lockedUntil: null };
+        return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null };
+      }
+      // Ensure uniqueCards array exists for backwards compatibility
+      if (!parsed.uniqueCards) {
+        parsed.uniqueCards = Object.keys(parsed.cardAttempts || {});
       }
       return parsed;
     }
   } catch (e) {
     console.log('Could not read payment attempts from sessionStorage');
   }
-  return { totalAttempts: 0, cardAttempts: {}, lockedUntil: null };
+  return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null };
 };
 
-const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Record<string, number>; lockedUntil: number | null }) => {
+const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Record<string, number>; uniqueCards: string[]; lockedUntil: number | null }) => {
   try {
     sessionStorage.setItem('payment_attempts', JSON.stringify(attempts));
   } catch (e) {
@@ -141,6 +146,21 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       return false;
     }
 
+    // Track unique cards used
+    if (!attempts.uniqueCards.includes(cardLast4)) {
+      attempts.uniqueCards.push(cardLast4);
+    }
+
+    // Check if too many different cards tried (fraud pattern)
+    if (attempts.uniqueCards.length > MAX_DIFFERENT_CARDS) {
+      toast.error('Pagamento temporariamente indisponível. Tente novamente mais tarde.');
+      attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      savePaymentAttempts(attempts);
+      setIsBlocked(true);
+      setBlockTimeRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+      return false;
+    }
+
     // Increment total attempts
     attempts.totalAttempts += 1;
     
@@ -151,7 +171,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     const cardAttemptsForThis = attempts.cardAttempts[cardLast4];
     
     if (cardAttemptsForThis > MAX_ATTEMPTS_PER_CARD) {
-      toast.error('Máximo de intentos con esta tarjeta alcanzado');
+      toast.error('Pagamento temporariamente indisponível. Tente novamente mais tarde.');
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
       savePaymentAttempts(attempts);
       setIsBlocked(true);
