@@ -21,6 +21,8 @@ interface StripeCardPaymentFormProps {
   productName?: string;
   customerEmail: string;
   customerName: string;
+  onEmailInvalid?: () => void;
+  onNameInvalid?: () => void;
 }
 
 const elementStyle = {
@@ -82,7 +84,9 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   onSuccess, 
   productName = 'Diamantes Free Fire',
   customerEmail,
-  customerName
+  customerName,
+  onEmailInvalid,
+  onNameInvalid
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -436,17 +440,20 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     // Validate email before processing
     if (!customerEmail || !customerEmail.trim()) {
       toast.error('El correo electrónico es obligatorio');
+      onEmailInvalid?.();
       return;
     }
 
     if (!isValidEmail(customerEmail)) {
       toast.error('Ingresa un correo electrónico válido (ej: nombre@gmail.com)');
+      onEmailInvalid?.();
       return;
     }
 
     // Validate name
     if (!customerName || !customerName.trim()) {
       toast.error('El nombre completo es obligatorio');
+      onNameInvalid?.();
       return;
     }
 
