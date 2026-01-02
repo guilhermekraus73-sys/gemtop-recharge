@@ -14,13 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      payment_attempts: {
+        Row: {
+          attempt_type: string
+          card_last4: string | null
+          created_at: string
+          email: string | null
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          attempt_type?: string
+          card_last4?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          attempt_type?: string
+          card_last4?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clean_old_payment_attempts: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
