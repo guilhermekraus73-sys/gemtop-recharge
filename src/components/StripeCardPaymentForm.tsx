@@ -42,6 +42,7 @@ const MAX_ATTEMPTS_PER_CARD = 2;
 const MAX_TOTAL_ATTEMPTS = 3;
 const MAX_DIFFERENT_CARDS = 3; // Max different cards per session
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const COOLDOWN_BETWEEN_ATTEMPTS_MS = 35 * 1000; // 35 seconds between attempts
 
 // Get or initialize session payment attempts from sessionStorage
 const getPaymentAttempts = () => {
@@ -53,7 +54,7 @@ const getPaymentAttempts = () => {
       if (parsed.lockedUntil && Date.now() > parsed.lockedUntil) {
         // Reset after lockout expires
         sessionStorage.removeItem('payment_attempts');
-        return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null };
+        return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null, lastAttemptTime: null };
       }
       // Ensure uniqueCards array exists for backwards compatibility
       if (!parsed.uniqueCards) {
@@ -64,10 +65,10 @@ const getPaymentAttempts = () => {
   } catch (e) {
     console.log('Could not read payment attempts from sessionStorage');
   }
-  return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null };
+  return { totalAttempts: 0, cardAttempts: {}, uniqueCards: [], lockedUntil: null, lastAttemptTime: null };
 };
 
-const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Record<string, number>; uniqueCards: string[]; lockedUntil: number | null }) => {
+const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Record<string, number>; uniqueCards: string[]; lockedUntil: number | null; lastAttemptTime: number | null }) => {
   try {
     sessionStorage.setItem('payment_attempts', JSON.stringify(attempts));
   } catch (e) {
@@ -94,13 +95,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [canMakePayment, setCanMakePayment] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockTimeRemaining, setBlockTimeRemaining] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const isFormComplete = cardholderName && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
+  const isOnCooldown = cooldownRemaining > 0;
 
-  // Check if user is blocked on mount and update timer
+  // Check if user is blocked or on cooldown on mount and update timer
   useEffect(() => {
-    const checkBlockStatus = () => {
+    const checkStatus = () => {
       const attempts = getPaymentAttempts();
+      
+      // Check blocked status
       if (attempts.lockedUntil && Date.now() < attempts.lockedUntil) {
         setIsBlocked(true);
         setBlockTimeRemaining(Math.ceil((attempts.lockedUntil - Date.now()) / 1000));
@@ -114,13 +119,26 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         setIsBlocked(false);
         setBlockTimeRemaining(0);
       }
+
+      // Check cooldown status
+      if (attempts.lastAttemptTime) {
+        const cooldownEnd = attempts.lastAttemptTime + COOLDOWN_BETWEEN_ATTEMPTS_MS;
+        const remaining = cooldownEnd - Date.now();
+        if (remaining > 0) {
+          setCooldownRemaining(Math.ceil(remaining / 1000));
+        } else {
+          setCooldownRemaining(0);
+        }
+      }
     };
 
-    checkBlockStatus();
+    checkStatus();
     
-    // Update countdown every second if blocked
+    // Update countdown every second
     const interval = setInterval(() => {
       const attempts = getPaymentAttempts();
+      
+      // Update blocked timer
       if (attempts.lockedUntil) {
         const remaining = attempts.lockedUntil - Date.now();
         if (remaining > 0) {
@@ -130,6 +148,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           setIsBlocked(false);
           setBlockTimeRemaining(0);
           sessionStorage.removeItem('payment_attempts');
+        }
+      }
+
+      // Update cooldown timer
+      if (attempts.lastAttemptTime) {
+        const cooldownEnd = attempts.lastAttemptTime + COOLDOWN_BETWEEN_ATTEMPTS_MS;
+        const remaining = cooldownEnd - Date.now();
+        if (remaining > 0) {
+          setCooldownRemaining(Math.ceil(remaining / 1000));
+        } else {
+          setCooldownRemaining(0);
         }
       }
     }, 1000);
@@ -146,6 +175,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       return false;
     }
 
+    // Check cooldown between attempts
+    if (attempts.lastAttemptTime) {
+      const cooldownEnd = attempts.lastAttemptTime + COOLDOWN_BETWEEN_ATTEMPTS_MS;
+      if (Date.now() < cooldownEnd) {
+        const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
+        toast.error(`Por seguridad, espera ${remaining} segundos antes de intentar nuevamente.`);
+        setCooldownRemaining(remaining);
+        return false;
+      }
+    }
+
     // Track unique cards used
     if (!attempts.uniqueCards.includes(cardLast4)) {
       attempts.uniqueCards.push(cardLast4);
@@ -155,6 +195,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     if (attempts.uniqueCards.length > MAX_DIFFERENT_CARDS) {
       toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      attempts.lastAttemptTime = Date.now();
       savePaymentAttempts(attempts);
       setIsBlocked(true);
       setBlockTimeRemaining(Math.ceil(LOCKOUT_DURATION_MS / 1000));
@@ -166,6 +207,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     
     // Increment card-specific attempts
     attempts.cardAttempts[cardLast4] = (attempts.cardAttempts[cardLast4] || 0) + 1;
+
+    // Record attempt time for cooldown
+    attempts.lastAttemptTime = Date.now();
+    setCooldownRemaining(Math.ceil(COOLDOWN_BETWEEN_ATTEMPTS_MS / 1000));
 
     // Check limits
     const cardAttemptsForThis = attempts.cardAttempts[cardLast4];
@@ -621,16 +666,30 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           <span>Pago 100% seguro con encriptación SSL</span>
         </div>
 
+        {/* Cooldown Notice */}
+        {isOnCooldown && !isProcessing && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+            <p className="text-amber-700 text-sm">
+              Por seguridad, espera <span className="font-bold">{cooldownRemaining}s</span> antes de intentar nuevamente
+            </p>
+          </div>
+        )}
+
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isProcessing || !stripe || !elements || !isFormComplete}
-          className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2"
+          disabled={isProcessing || !stripe || !elements || !isFormComplete || isOnCooldown}
+          className="w-full h-14 bg-discount hover:bg-discount/90 text-primary-foreground text-lg font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isProcessing ? (
             <>
               <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
               Procesando...
+            </>
+          ) : isOnCooldown ? (
+            <>
+              <Lock className="w-5 h-5" />
+              Espera {cooldownRemaining}s...
             </>
           ) : (
             <>
