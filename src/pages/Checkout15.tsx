@@ -165,6 +165,14 @@ const Checkout15: React.FC = () => {
                 productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
                 customerEmail={email.trim()}
                 customerName={fullName}
+                onEmailInvalid={() => {
+                  setEmailTouched(true);
+                  if (!email.trim()) {
+                    setEmailError('El correo electrónico es obligatorio');
+                  } else {
+                    setEmailError('Ingresa un correo electrónico válido');
+                  }
+                }}
               />
             </Elements>
           </div>
