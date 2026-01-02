@@ -305,6 +305,15 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
         if (error) throw error;
 
+        // Handle rate limiting from backend
+        if (data.rate_limited) {
+          ev.complete('fail');
+          setIsBlocked(true);
+          setBlockTimeRemaining(10 * 60); // 10 minutes
+          toast.error(data.error || 'Muitas tentativas. Tente novamente em alguns minutos.');
+          return;
+        }
+
         if (data.requires_action && data.client_secret) {
           const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
           
@@ -316,12 +325,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
           if (paymentIntent?.status === 'succeeded') {
             ev.complete('success');
+            clearPaymentAttempts();
             await registerUtmifySaleFor3DS(paymentIntent.id);
             toast.success('¡Pago realizado con éxito!');
             onSuccess();
           }
         } else if (data.success) {
           ev.complete('success');
+          clearPaymentAttempts();
           logPaymentSuccess(data.paymentIntentId);
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
@@ -329,9 +340,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           ev.complete('fail');
           toast.error(data.error || 'Pago rechazado');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('[PAYMENT] Wallet payment error:', err);
         ev.complete('fail');
+        // Check if it's a rate limit error (429)
+        if (err?.status === 429 || err?.message?.includes('rate') || err?.message?.includes('tentativas')) {
+          setIsBlocked(true);
+          setBlockTimeRemaining(10 * 60);
+        }
         toast.error('Error al procesar el pago');
       }
     };
@@ -407,6 +423,15 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       if (error) throw error;
 
       console.log('[PAYMENT] Response:', data);
+
+      // Handle rate limiting from backend
+      if (data.rate_limited) {
+        setIsBlocked(true);
+        setBlockTimeRemaining(10 * 60); // 10 minutes
+        toast.error(data.error || 'Muitas tentativas. Tente novamente em alguns minutos.');
+        setIsProcessing(false);
+        return;
+      }
 
       if (data.requires_action && data.client_secret) {
         // Handle 3D Secure authentication

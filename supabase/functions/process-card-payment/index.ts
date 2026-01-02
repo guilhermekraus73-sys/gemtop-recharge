@@ -1,10 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-forwarded-for, x-real-ip",
 };
+
+// Rate limiting constants
+const MAX_ATTEMPTS_PER_IP = 5;          // Max attempts per IP in time window
+const MAX_ATTEMPTS_PER_EMAIL = 5;       // Max attempts per email in time window
+const MAX_ATTEMPTS_PER_CARD = 2;        // Max attempts per card (last 4 digits) in time window
+const TIME_WINDOW_MINUTES = 10;         // Time window in minutes
 
 // Price mapping for each package (amount in cents)
 const PRICES: Record<string, { amount: number; diamonds: number }> = {
@@ -13,6 +20,135 @@ const PRICES: Record<string, { amount: number; diamonds: number }> = {
   "15": { amount: 1590, diamonds: 11200 },   // $15.90
   "19": { amount: 1900, diamonds: 22400 },   // $19.00
 };
+
+// Create Supabase client with service role for database access
+function getSupabaseClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+}
+
+// Get client IP from headers
+function getClientIP(req: Request): string {
+  // Try various headers that might contain the real IP
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  
+  const realIP = req.headers.get("x-real-ip");
+  if (realIP) {
+    return realIP;
+  }
+  
+  const cfConnectingIP = req.headers.get("cf-connecting-ip");
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  
+  return "unknown";
+}
+
+// Check rate limits and record attempt
+async function checkRateLimits(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  ip: string,
+  email: string,
+  cardLast4?: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const timeWindowStart = new Date(Date.now() - TIME_WINDOW_MINUTES * 60 * 1000).toISOString();
+  
+  try {
+    // Check IP attempts
+    const { count: ipCount, error: ipError } = await supabase
+      .from("payment_attempts")
+      .select("*", { count: "exact", head: true })
+      .eq("ip_address", ip)
+      .gte("created_at", timeWindowStart);
+
+    if (ipError) {
+      console.error("[RATE-LIMIT] Error checking IP attempts:", ipError);
+    } else if (ipCount && ipCount >= MAX_ATTEMPTS_PER_IP) {
+      console.log(`[RATE-LIMIT] IP ${ip} blocked - ${ipCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
+      return { 
+        allowed: false, 
+        reason: `Muitas tentativas deste endereço. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+      };
+    }
+
+    // Check email attempts
+    if (email) {
+      const { count: emailCount, error: emailError } = await supabase
+        .from("payment_attempts")
+        .select("*", { count: "exact", head: true })
+        .eq("email", email.toLowerCase())
+        .gte("created_at", timeWindowStart);
+
+      if (emailError) {
+        console.error("[RATE-LIMIT] Error checking email attempts:", emailError);
+      } else if (emailCount && emailCount >= MAX_ATTEMPTS_PER_EMAIL) {
+        console.log(`[RATE-LIMIT] Email ${email} blocked - ${emailCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
+        return { 
+          allowed: false, 
+          reason: `Muitas tentativas com este e-mail. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+        };
+      }
+    }
+
+    // Check card attempts (if card info provided)
+    if (cardLast4) {
+      const { count: cardCount, error: cardError } = await supabase
+        .from("payment_attempts")
+        .select("*", { count: "exact", head: true })
+        .eq("card_last4", cardLast4)
+        .gte("created_at", timeWindowStart);
+
+      if (cardError) {
+        console.error("[RATE-LIMIT] Error checking card attempts:", cardError);
+      } else if (cardCount && cardCount >= MAX_ATTEMPTS_PER_CARD) {
+        console.log(`[RATE-LIMIT] Card ****${cardLast4} blocked - ${cardCount} attempts in ${TIME_WINDOW_MINUTES} minutes`);
+        return { 
+          allowed: false, 
+          reason: `Muitas tentativas com este cartão. Aguarde ${TIME_WINDOW_MINUTES} minutos.` 
+        };
+      }
+    }
+
+    return { allowed: true };
+  } catch (error) {
+    console.error("[RATE-LIMIT] Error checking rate limits:", error);
+    // On error, allow the attempt (fail open) but log it
+    return { allowed: true };
+  }
+}
+
+// Record a payment attempt
+async function recordPaymentAttempt(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  ip: string,
+  email: string,
+  cardLast4?: string,
+  attemptType: string = "payment"
+): Promise<void> {
+  try {
+    const { error } = await supabase.from("payment_attempts").insert({
+      ip_address: ip,
+      email: email?.toLowerCase() || null,
+      card_last4: cardLast4 || null,
+      attempt_type: attemptType,
+    });
+
+    if (error) {
+      console.error("[RATE-LIMIT] Error recording attempt:", error);
+    } else {
+      console.log(`[RATE-LIMIT] Recorded ${attemptType} attempt for IP: ${ip}, email: ${email}, card: ****${cardLast4 || "N/A"}`);
+    }
+  } catch (error) {
+    console.error("[RATE-LIMIT] Error recording attempt:", error);
+  }
+}
 
 // Function to register sale with UTMify
 async function registerUtmifySale(data: {
@@ -101,10 +237,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabase = getSupabaseClient();
+  const clientIP = getClientIP(req);
+
   try {
     const { paymentMethodId, priceKey, email, name, trackingParams } = await req.json();
     
-    console.log("[PROCESS-CARD-PAYMENT] Request received", { paymentMethodId, priceKey, email, name, trackingParams });
+    console.log("[PROCESS-CARD-PAYMENT] Request received", { 
+      paymentMethodId, 
+      priceKey, 
+      email, 
+      name, 
+      clientIP,
+      trackingParams 
+    });
 
     if (!paymentMethodId) {
       throw new Error("PaymentMethod ID is required");
@@ -115,10 +261,40 @@ serve(async (req) => {
       throw new Error(`Invalid price key: ${priceKey}`);
     }
 
-    // Initialize Stripe
+    // Initialize Stripe to get card info
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+
+    // Get card last 4 digits from PaymentMethod
+    let cardLast4: string | undefined;
+    try {
+      const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+      cardLast4 = paymentMethod.card?.last4;
+      console.log("[PROCESS-CARD-PAYMENT] Card last 4:", cardLast4);
+    } catch (e) {
+      console.log("[PROCESS-CARD-PAYMENT] Could not retrieve card info:", e);
+    }
+
+    // Check rate limits BEFORE processing payment
+    const rateLimitCheck = await checkRateLimits(supabase, clientIP, email, cardLast4);
+    if (!rateLimitCheck.allowed) {
+      console.log("[PROCESS-CARD-PAYMENT] Rate limited:", rateLimitCheck.reason);
+      
+      // Record blocked attempt
+      await recordPaymentAttempt(supabase, clientIP, email, cardLast4, "blocked");
+      
+      return new Response(JSON.stringify({ 
+        error: rateLimitCheck.reason,
+        rate_limited: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
+
+    // Record this payment attempt
+    await recordPaymentAttempt(supabase, clientIP, email, cardLast4, "payment");
 
     console.log("[PROCESS-CARD-PAYMENT] Creating and confirming PaymentIntent for amount:", priceData.amount);
 
@@ -137,6 +313,7 @@ serve(async (req) => {
         customer_email: email || '',
         diamonds: priceData.diamonds.toString(),
         price_key: priceKey,
+        client_ip: clientIP,
       },
       receipt_email: email || undefined,
       return_url: `${req.headers.get("origin") || 'https://recargadediamantesoficial.online'}/obrigado`,
