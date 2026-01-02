@@ -156,25 +156,17 @@ const Checkout15: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Section with Stripe - only show if form is valid */}
-            {isFormValid ? (
-              <Elements stripe={stripePromise}>
-                <StripeCardPaymentForm 
-                  priceKey={priceKey}
-                  amount={priceUsd}
-                  onSuccess={handlePaymentSuccess}
-                  productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
-                  customerEmail={email.trim()}
-                  customerName={fullName}
-                />
-              </Elements>
-            ) : (
-              <div className="bg-muted/50 border border-border rounded-xl p-6 text-center">
-                <p className="text-muted-foreground">
-                  Completa tu correo electrónico y nombre para continuar con el pago
-                </p>
-              </div>
-            )}
+            {/* Payment Section with Stripe */}
+            <Elements stripe={stripePromise}>
+              <StripeCardPaymentForm 
+                priceKey={priceKey}
+                amount={priceUsd}
+                onSuccess={handlePaymentSuccess}
+                productName={`${diamonds.toLocaleString()} Diamantes Free Fire`}
+                customerEmail={email.trim()}
+                customerName={fullName}
+              />
+            </Elements>
           </div>
         </div>
       </div>
