@@ -424,8 +424,31 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     };
   }, [paymentRequest, stripe, priceKey, customerEmail, customerName]);
 
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email before processing
+    if (!customerEmail || !customerEmail.trim()) {
+      toast.error('El correo electrónico es obligatorio');
+      return;
+    }
+
+    if (!isValidEmail(customerEmail)) {
+      toast.error('Ingresa un correo electrónico válido (ej: nombre@gmail.com)');
+      return;
+    }
+
+    // Validate name
+    if (!customerName || !customerName.trim()) {
+      toast.error('El nombre completo es obligatorio');
+      return;
+    }
 
     // Check if blocked before processing
     if (isBlocked) {
