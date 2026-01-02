@@ -153,7 +153,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     // Check if too many different cards tried (fraud pattern)
     if (attempts.uniqueCards.length > MAX_DIFFERENT_CARDS) {
-      toast.error('Pagamento temporariamente indisponível. Tente novamente mais tarde.');
+      toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
       savePaymentAttempts(attempts);
       setIsBlocked(true);
@@ -171,7 +171,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     const cardAttemptsForThis = attempts.cardAttempts[cardLast4];
     
     if (cardAttemptsForThis > MAX_ATTEMPTS_PER_CARD) {
-      toast.error('Pagamento temporariamente indisponível. Tente novamente mais tarde.');
+      toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
       savePaymentAttempts(attempts);
       setIsBlocked(true);
@@ -330,7 +330,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           ev.complete('fail');
           setIsBlocked(true);
           setBlockTimeRemaining(10 * 60); // 10 minutes
-          toast.error(data.error || 'Muitas tentativas. Tente novamente em alguns minutos.');
+          toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
           return;
         }
 
@@ -339,7 +339,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           
           if (confirmError) {
             ev.complete('fail');
-            toast.error('Pago rechazado');
+            toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
             return;
           }
 
@@ -358,7 +358,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           onSuccess();
         } else {
           ev.complete('fail');
-          toast.error(data.error || 'Pago rechazado');
+          toast.error(data.error ? 'Tu banco rechazó la transacción. Por seguridad, espera unos minutos.' : 'Tu banco no pudo procesar el pago.');
         }
       } catch (err: any) {
         console.error('[PAYMENT] Wallet payment error:', err);
@@ -368,7 +368,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           setIsBlocked(true);
           setBlockTimeRemaining(10 * 60);
         }
-        toast.error('Error al procesar el pago');
+        toast.error('Tu banco no pudo completar la verificación. Intenta de nuevo en unos minutos.');
       }
     };
 
@@ -448,7 +448,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       if (data.rate_limited) {
         setIsBlocked(true);
         setBlockTimeRemaining(10 * 60); // 10 minutes
-        toast.error(data.error || 'Muitas tentativas. Tente novamente em alguns minutos.');
+        toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
         setIsProcessing(false);
         return;
       }
@@ -458,7 +458,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
         
         if (confirmError) {
-          toast.error(confirmError.message || 'Tarjeta rechazada');
+          toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
           setIsProcessing(false);
           return;
         }
@@ -479,13 +479,16 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       } else if (data.error) {
-        // Payment failed (card declined, etc.)
-        toast.error(data.error.includes('declined') ? 'Tarjeta rechazada' : data.error);
+        // Payment failed (card declined, etc.) - friendly message to reduce insistence
+        const isDeclined = data.error.includes('declined') || data.error.includes('failed');
+        toast.error(isDeclined 
+          ? 'Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.' 
+          : 'Tu banco no pudo procesar el pago. Intenta con otra forma de pago o contacta a tu banco.');
         setIsProcessing(false);
       }
     } catch (err) {
       console.error('Payment error:', err);
-      toast.error('Error al procesar el pago');
+      toast.error('Tu banco no pudo completar la verificación. Intenta de nuevo en unos minutos.');
       setIsProcessing(false);
     }
   };
@@ -501,19 +504,23 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   if (isBlocked) {
     return (
       <div className="space-y-4">
-        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 text-center">
-          <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-destructive mb-2">
-            Pagamento temporariamente indisponível
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+          <Shield className="w-12 h-12 text-amber-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-amber-800 mb-2">
+            Tu banco requiere verificación adicional
           </h3>
-          <p className="text-muted-foreground mb-4">
-            Muitas tentativas de pagamento foram detectadas. Por segurança, aguarde alguns minutos antes de tentar novamente.
+          <p className="text-amber-700 mb-4">
+            Por seguridad, tu banco ha bloqueado temporalmente nuevas transacciones. 
+            Esto es normal cuando hay múltiples intentos de pago.
           </p>
-          <div className="text-2xl font-mono font-bold text-destructive">
+          <p className="text-amber-700 mb-4">
+            Por favor, espera unos minutos o contacta a tu banco para autorizar la compra.
+          </p>
+          <div className="text-2xl font-mono font-bold text-amber-800">
             {formatTimeRemaining(blockTimeRemaining)}
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Tempo restante para tentar novamente
+          <p className="text-sm text-amber-600 mt-2">
+            Tiempo de espera recomendado
           </p>
         </div>
       </div>
