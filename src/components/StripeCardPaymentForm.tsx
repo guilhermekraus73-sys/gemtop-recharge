@@ -92,6 +92,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
+  const [postalCode, setPostalCode] = useState('');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -487,6 +488,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           email: customerEmail,
           address: {
+            postal_code: postalCode || undefined,
             country: 'CO', // Colombia - default for LATAM market
           }
         },
@@ -543,6 +545,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               name: cardholderName,
               email: customerEmail,
               address: {
+                postal_code: postalCode || undefined,
                 country: 'CO', // Colombia - default for LATAM market
               }
             }
@@ -705,6 +708,24 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Postal Code / ZIP */}
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            Código postal <span className="text-muted-foreground font-normal">(opcional)</span>
+          </label>
+          <Input
+            type="text"
+            placeholder="Ej: 10001, 110111"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '').slice(0, 10))}
+            className="h-12 bg-white text-black border-gray-300"
+            maxLength={10}
+          />
+          <p className="text-xs text-muted-foreground">
+            Agregar tu código postal reduce rechazos de pago
+          </p>
         </div>
 
         {/* Security Notice */}
