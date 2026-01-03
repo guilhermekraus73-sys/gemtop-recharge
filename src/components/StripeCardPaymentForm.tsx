@@ -710,10 +710,9 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           </div>
         </div>
 
-        {/* Postal Code / ZIP */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Código postal <span className="text-muted-foreground font-normal">(opcional)</span>
+            Código postal
           </label>
           <Input
             type="text"
