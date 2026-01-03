@@ -345,6 +345,7 @@ serve(async (req) => {
     console.log("[PROCESS-CARD-PAYMENT] Creating and confirming PaymentIntent for amount:", priceData.amount);
 
     // Create PaymentIntent with the PaymentMethod and confirm immediately
+    // Include metadata for Stripe Radar to reduce false positives
     const paymentIntent = await stripe.paymentIntents.create({
       amount: priceData.amount,
       currency: "usd",
@@ -354,13 +355,19 @@ serve(async (req) => {
         enabled: true,
         allow_redirects: 'never', // Don't allow redirects for this flow
       },
+      // Metadata helps Stripe Radar understand the transaction is legitimate
       metadata: {
         customer_name: name || '',
         customer_email: email || '',
         diamonds: priceData.diamonds.toString(),
         price_key: priceKey,
         client_ip: clientIP,
+        product_type: 'digital_goods',
+        product_name: 'Diamantes Free Fire',
+        source: 'checkout_form',
       },
+      // Description helps with Radar rules and customer statements
+      description: `${priceData.diamonds} Diamantes Free Fire`,
       receipt_email: email || undefined,
       return_url: `${req.headers.get("origin") || 'https://recargadediamantesoficial.online'}/obrigado`,
     });
