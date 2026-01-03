@@ -384,7 +384,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         }
 
         if (data.requires_action && data.client_secret) {
-          const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
+          // Handle 3D Secure with billing details for wallet payments
+          const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret, {
+            payment_method: ev.paymentMethod.id
+          });
           
           if (confirmError) {
             ev.complete('fail');
@@ -476,13 +479,16 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     setIsProcessing(true);
 
     try {
-      // Create PaymentMethod from card details
+      // Create PaymentMethod from card details with billing info to reduce declines
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
         billing_details: {
           name: cardholderName,
           email: customerEmail,
+          address: {
+            country: 'CO', // Colombia - default for LATAM market
+          }
         },
       });
 
@@ -529,8 +535,19 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       }
 
       if (data.requires_action && data.client_secret) {
-        // Handle 3D Secure authentication
-        const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
+        // Handle 3D Secure authentication with billing details to reduce declines
+        const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.client_secret, {
+          payment_method: {
+            card: cardNumberElement,
+            billing_details: {
+              name: cardholderName,
+              email: customerEmail,
+              address: {
+                country: 'CO', // Colombia - default for LATAM market
+              }
+            }
+          }
+        });
         
         if (confirmError) {
           toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
