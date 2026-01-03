@@ -489,7 +489,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           email: customerEmail,
           address: {
             postal_code: postalCode || undefined,
-            country: 'CO', // Colombia - default for LATAM market
+            country: 'US', // USA for AVS validation
           }
         },
       });
@@ -546,7 +546,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               email: customerEmail,
               address: {
                 postal_code: postalCode || undefined,
-                country: 'CO', // Colombia - default for LATAM market
+                country: 'US', // USA for AVS validation
               }
             }
           }
