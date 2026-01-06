@@ -66,6 +66,7 @@ const Checkout9: React.FC = () => {
       setEmailError('');
       // Track 'dados' when email is valid and name is filled
       if (fullName.trim() && !dadosTracked) {
+        console.log('[FUNNEL] Disparando dados - email blur');
         trackFunnel('dados', { productId: 'diamantes-9', source: getSource() });
         setDadosTracked(true);
       }
@@ -75,6 +76,7 @@ const Checkout9: React.FC = () => {
   // Track 'dados' when both fields are valid
   const handleNameBlur = () => {
     if (isValidEmail(email) && fullName.trim() && !dadosTracked) {
+      console.log('[FUNNEL] Disparando dados - name blur');
       trackFunnel('dados', { productId: 'diamantes-9', source: getSource() });
       setDadosTracked(true);
     }

@@ -97,6 +97,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
+  const [pagamentoTracked, setPagamentoTracked] = useState(false);
   const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
   const [canMakePayment, setCanMakePayment] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -481,11 +482,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     }
 
     setIsProcessing(true);
-    
-    // Track payment attempt
-    const source = new URLSearchParams(window.location.search).get('utm_source') || 
-                   localStorage.getItem('utm_source') || null;
-    trackFunnel('pagamento', { productId: `diamantes-${priceKey}`, source });
 
     try {
       // Create PaymentMethod from card details with billing info to reduce declines
@@ -686,7 +682,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
             <CardNumberElement 
               options={{ style: elementStyle, showIcon: true }}
-              onChange={(e) => setCardNumberComplete(e.complete)}
+              onChange={(e) => {
+                setCardNumberComplete(e.complete);
+                // Track 'pagamento' when user starts filling card
+                if (!pagamentoTracked) {
+                  console.log('[FUNNEL] Disparando pagamento - card focus');
+                  const source = new URLSearchParams(window.location.search).get('utm_source') || 
+                                 localStorage.getItem('utm_source') || null;
+                  trackFunnel('pagamento', { productId: `diamantes-${priceKey}`, source });
+                  setPagamentoTracked(true);
+                }
+              }}
               className="w-full"
             />
           </div>
