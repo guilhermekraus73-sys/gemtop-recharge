@@ -1,27 +1,44 @@
 // Funnel tracking hook for customer journey analytics
 
 const getSessionId = (): string => {
-  let sessionId = localStorage.getItem('fid');
+  let sessionId = localStorage.getItem('funnel_session');
   if (!sessionId) {
-    sessionId = 's_' + Math.random().toString(36).substr(2, 9) + Date.now();
-    localStorage.setItem('fid', sessionId);
+    sessionId = crypto.randomUUID();
+    localStorage.setItem('funnel_session', sessionId);
   }
   return sessionId;
 };
 
-export const track = (step: string, productId?: string | null, source?: string | null): void => {
+interface TrackOptions {
+  productId?: string | null;
+  source?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export const trackFunnel = async (step: string, options: TrackOptions = {}): Promise<void> => {
   const sessionId = getSessionId();
   
-  fetch('https://wuoxjuirisedgpioqmmv.supabase.co/functions/v1/track', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      step: step,
-      session_id: sessionId,
-      product_id: productId || null,
-      source: source || null
-    })
-  }).catch(err => console.error('Funnel tracking error:', err));
+  try {
+    await fetch('https://wuoxjuirisedgpioqmmv.supabase.co/functions/v1/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        step: step,
+        session_id: sessionId,
+        product_id: options.productId || null,
+        source: options.source || null,
+        metadata: options.metadata || {}
+      })
+    });
+    console.log('Evento rastreado:', step);
+  } catch (error) {
+    console.error('Erro ao rastrear:', error);
+  }
+};
+
+// Legacy alias for backwards compatibility
+export const track = (step: string, productId?: string | null, source?: string | null): void => {
+  trackFunnel(step, { productId, source });
 };
 
 // Auto-detect step from URL and track automatically
@@ -46,9 +63,6 @@ export const autoTrack = (productId?: string): void => {
               null;
   
   if (step) {
-    track(step, prod, src);
+    trackFunnel(step, { productId: prod, source: src });
   }
 };
-
-// Legacy alias for backwards compatibility
-export const trackFunnel = track;
