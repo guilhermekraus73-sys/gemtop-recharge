@@ -13,7 +13,7 @@ import { Shield, Lock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { PaymentRequest } from '@stripe/stripe-js';
-import { track } from '@/hooks/useFunnelTracking';
+import { track, trackFunnel } from '@/hooks/useFunnelTracking';
 
 interface StripeCardPaymentFormProps {
   priceKey: string;
@@ -401,6 +401,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
             ev.complete('success');
             clearPaymentAttempts();
             await registerUtmifySaleFor3DS(paymentIntent.id);
+            trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
             toast.success('¡Pago realizado con éxito!');
             onSuccess();
           }
@@ -408,6 +409,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           ev.complete('success');
           clearPaymentAttempts();
           logPaymentSuccess(data.paymentIntentId);
+          trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
         } else {
@@ -567,6 +569,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         if (paymentIntent?.status === 'succeeded') {
           clearPaymentAttempts();
           await registerUtmifySaleFor3DS(paymentIntent.id);
+          trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
           toast.success('¡Pago realizado con éxito!');
           onSuccess();
           return;
@@ -577,6 +580,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         // Payment succeeded without 3DS - clear attempts
         clearPaymentAttempts();
         logPaymentSuccess(data.paymentIntentId);
+        trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
       } else if (data.error) {
