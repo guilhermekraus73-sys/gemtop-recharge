@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUtmifyHotmartPixel } from '@/hooks/useUtmifyHotmartPixel';
+import { trackFunnel } from '@/hooks/useFunnelTracking';
 import { CreditCard, Clock, Shield, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,13 @@ const Checkout: React.FC = () => {
   const packageId = searchParams.get('id') || 'oferta1';
   const selectedPackage = packages[packageId] || packages['oferta1'];
   useUtmifyHotmartPixel();
+
+  // Track funnel on checkout page load
+  useEffect(() => {
+    const source = new URLSearchParams(window.location.search).get('utm_source') || 
+                   localStorage.getItem('utm_source') || undefined;
+    trackFunnel('checkout', `diamantes-${packageId}`, source);
+  }, [packageId]);
 
   const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [fullName, setFullName] = useState('');
