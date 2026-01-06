@@ -1,10 +1,20 @@
+import { useEffect } from "react";
 import { CheckCircle, Diamond, Clock, Shield } from "lucide-react";
 import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
+import { track } from "@/hooks/useFunnelTracking";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
 const ThankYouBoleto = () => {
   useUtmifyHotmartPixel();
+  
+  // Track boleto purchase on page load
+  useEffect(() => {
+    const source = new URLSearchParams(window.location.search).get('utm_source') || 
+                   localStorage.getItem('utm_source') || null;
+    track('comprou', 'diamantes-boleto', source);
+  }, []);
+  
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-4 py-6">
       {/* Logo */}
