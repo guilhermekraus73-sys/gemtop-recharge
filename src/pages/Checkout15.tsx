@@ -8,7 +8,7 @@ import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-import { track } from '@/hooks/useFunnelTracking';
+import { track, trackFunnel } from '@/hooks/useFunnelTracking';
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
@@ -25,7 +25,11 @@ const Checkout15: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [emailError, setEmailError] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
+  const [dadosTracked, setDadosTracked] = useState(false);
   useUtmifyStripePixel();
+  
+  const getSource = () => new URLSearchParams(window.location.search).get('utm_source') || 
+                          localStorage.getItem('utm_source') || null;
 
   const priceKey = '15';
   const priceUsd = 15.90;
@@ -60,6 +64,17 @@ const Checkout15: React.FC = () => {
       setEmailError('Ingresa un correo electrónico válido');
     } else {
       setEmailError('');
+      if (fullName.trim() && !dadosTracked) {
+        trackFunnel('dados', { productId: 'diamantes-15', source: getSource() });
+        setDadosTracked(true);
+      }
+    }
+  };
+  
+  const handleNameBlur = () => {
+    if (isValidEmail(email) && fullName.trim() && !dadosTracked) {
+      trackFunnel('dados', { productId: 'diamantes-15', source: getSource() });
+      setDadosTracked(true);
     }
   };
 
@@ -158,6 +173,7 @@ const Checkout15: React.FC = () => {
                   placeholder="Ingresa tu nombre completo"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  onBlur={handleNameBlur}
                   className="h-12 bg-muted border-border"
                   required
                 />
