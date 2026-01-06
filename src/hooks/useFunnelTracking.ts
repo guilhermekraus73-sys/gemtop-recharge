@@ -1,15 +1,15 @@
 // Funnel tracking hook for customer journey analytics
 
 const getSessionId = (): string => {
-  let sessionId = localStorage.getItem('funnelSessionId');
+  let sessionId = localStorage.getItem('fid');
   if (!sessionId) {
-    sessionId = 'sess_' + Math.random().toString(36).substr(2, 9) + Date.now();
-    localStorage.setItem('funnelSessionId', sessionId);
+    sessionId = 's_' + Math.random().toString(36).substr(2, 9) + Date.now();
+    localStorage.setItem('fid', sessionId);
   }
   return sessionId;
 };
 
-export const trackFunnel = (step: string, productId?: string, source?: string): void => {
+export const track = (step: string, productId?: string | null, source?: string | null): void => {
   const sessionId = getSessionId();
   
   fetch('https://wuoxjuirisedgpioqmmv.supabase.co/functions/v1/track', {
@@ -24,13 +24,31 @@ export const trackFunnel = (step: string, productId?: string, source?: string): 
   }).catch(err => console.error('Funnel tracking error:', err));
 };
 
-export const useFunnelTracking = (step: string, productId?: string) => {
-  const source = new URLSearchParams(window.location.search).get('utm_source') || 
-                 localStorage.getItem('utm_source') || 
-                 null;
+// Auto-detect step from URL and track automatically
+export const autoTrack = (productId?: string): void => {
+  const url = window.location.href;
+  const params = new URLSearchParams(window.location.search);
   
-  // Track on mount
-  if (typeof window !== 'undefined') {
-    trackFunnel(step, productId, source || undefined);
+  // Detect step from URL
+  let step: string | null = null;
+  if (url.includes('checkout')) step = 'checkout';
+  else if (url.includes('dados')) step = 'dados';
+  else if (url.includes('pagamento')) step = 'pagamento';
+  else if (url.includes('obrigado') || url.includes('sucesso')) step = 'comprou';
+  
+  // Get product from URL or use provided
+  const prod = productId || params.get('produto') || null;
+  
+  // Get source from URL or referrer
+  const src = params.get('utm_source') || 
+              localStorage.getItem('utm_source') || 
+              document.referrer || 
+              null;
+  
+  if (step) {
+    track(step, prod, src);
   }
 };
+
+// Legacy alias for backwards compatibility
+export const trackFunnel = track;

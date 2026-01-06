@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { CheckCircle, Diamond, Gift, Clock, AlertTriangle, Sparkles, BookOpen } from "lucide-react";
 import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
+import { track } from "@/hooks/useFunnelTracking";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
@@ -10,6 +12,14 @@ const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQo
 
 const ThankYou = () => {
   useUtmifyHotmartPixel();
+  
+  // Track purchase on thank you page load
+  useEffect(() => {
+    const source = new URLSearchParams(window.location.search).get('utm_source') || 
+                   localStorage.getItem('utm_source') || null;
+    track('comprou', 'diamantes', source);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <main className="w-full max-w-md bg-card rounded-2xl shadow-xl p-6 animate-fade-in">
