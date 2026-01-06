@@ -42,9 +42,17 @@ const Checkout19: React.FC = () => {
     track('checkout', 'diamantes-19', source);
   }, []);
 
-  // Validate email when it changes
+  // Track 'dados' on first keystroke in email field
   const handleEmailChange = (value: string) => {
     setEmail(value);
+    
+    // Track 'dados' immediately on first input
+    if (!dadosTracked && value.length > 0) {
+      console.log('[FUNNEL] Disparando dados - primeiro keystroke');
+      trackFunnel('dados', { productId: 'diamantes-19', source: getSource() });
+      setDadosTracked(true);
+    }
+    
     if (emailTouched) {
       if (!value.trim()) {
         setEmailError('El correo electrónico es obligatorio');
@@ -64,18 +72,11 @@ const Checkout19: React.FC = () => {
       setEmailError('Ingresa un correo electrónico válido');
     } else {
       setEmailError('');
-      if (fullName.trim() && !dadosTracked) {
-        trackFunnel('dados', { productId: 'diamantes-19', source: getSource() });
-        setDadosTracked(true);
-      }
     }
   };
   
   const handleNameBlur = () => {
-    if (isValidEmail(email) && fullName.trim() && !dadosTracked) {
-      trackFunnel('dados', { productId: 'diamantes-19', source: getSource() });
-      setDadosTracked(true);
-    }
+    // No additional tracking needed - dados already tracked on first keystroke
   };
 
   const isFormValid = isValidEmail(email) && fullName.trim().length > 0;
