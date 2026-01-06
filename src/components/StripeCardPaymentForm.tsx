@@ -485,7 +485,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     // Track payment attempt
     const source = new URLSearchParams(window.location.search).get('utm_source') || 
                    localStorage.getItem('utm_source') || null;
-    track('pagamento', productName, source);
+    trackFunnel('pagamento', { productId: `diamantes-${priceKey}`, source });
 
     try {
       // Create PaymentMethod from card details with billing info to reduce declines
