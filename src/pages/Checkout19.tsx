@@ -8,7 +8,7 @@ import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import membershipsBanner from '@/assets/memberships-banner.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
-import { trackFunnel } from '@/hooks/useFunnelTracking';
+import { track } from '@/hooks/useFunnelTracking';
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
 
@@ -34,8 +34,8 @@ const Checkout19: React.FC = () => {
   // Track funnel on checkout page load
   useEffect(() => {
     const source = new URLSearchParams(window.location.search).get('utm_source') || 
-                   localStorage.getItem('utm_source') || undefined;
-    trackFunnel('checkout', 'diamantes-19', source);
+                   localStorage.getItem('utm_source') || null;
+    track('checkout', 'diamantes-19', source);
   }, []);
 
   // Validate email when it changes
