@@ -17,6 +17,7 @@ import Checkout15 from "./pages/Checkout15";
 import Checkout19 from "./pages/Checkout19";
 import ThankYou from "./pages/ThankYou";
 import ThankYouBoleto from "./pages/ThankYouBoleto";
+import TestFunnel from "./pages/TestFunnel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/checkout19" element={<Checkout19 />} />
           <Route path="/obrigado" element={<ThankYou />} />
           <Route path="/obrigado-boleto" element={<ThankYouBoleto />} />
+          <Route path="/test-funnel" element={<TestFunnel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
