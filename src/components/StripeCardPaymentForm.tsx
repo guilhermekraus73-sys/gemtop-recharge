@@ -13,6 +13,7 @@ import { Shield, Lock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { PaymentRequest } from '@stripe/stripe-js';
+import { track } from '@/hooks/useFunnelTracking';
 
 interface StripeCardPaymentFormProps {
   priceKey: string;
@@ -478,6 +479,11 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     }
 
     setIsProcessing(true);
+    
+    // Track payment attempt
+    const source = new URLSearchParams(window.location.search).get('utm_source') || 
+                   localStorage.getItem('utm_source') || null;
+    track('pagamento', productName, source);
 
     try {
       // Create PaymentMethod from card details with billing info to reduce declines
