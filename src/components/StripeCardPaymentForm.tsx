@@ -79,6 +79,29 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
   }
 };
 
+// Country codes for Latin America + USA
+const COUNTRIES = [
+  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+  { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+  { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
+  { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
+  { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
+  { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
+  { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
+  { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
+  { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
+  { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+  { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+];
+
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
   priceKey,
   amount, 
@@ -94,6 +117,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
   const [postalCode, setPostalCode] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('US');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -493,7 +517,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           email: customerEmail,
           address: {
             postal_code: postalCode || undefined,
-            country: 'US', // USA for AVS validation
+            country: selectedCountry, // User selected country for AVS validation
           }
         },
       });
@@ -550,7 +574,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               email: customerEmail,
               address: {
                 postal_code: postalCode || undefined,
-                country: 'US', // USA for AVS validation
+                country: selectedCountry, // User selected country for AVS validation
               }
             }
           }
@@ -726,6 +750,25 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           </div>
         </div>
 
+        {/* Country Selector */}
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            País de la tarjeta
+          </label>
+          <select
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+            className="w-full h-12 px-3 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.flag} {country.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Postal Code */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
             Código postal
