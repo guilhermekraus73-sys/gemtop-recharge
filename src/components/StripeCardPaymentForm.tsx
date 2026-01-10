@@ -79,18 +79,34 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
   }
 };
 
-// Supported LATAM + USA country codes
-const SUPPORTED_COUNTRIES = ['US', 'MX', 'CO', 'AR', 'PE', 'CL', 'EC', 'GT', 'BO', 'DO', 'HN', 'SV', 'NI', 'CR', 'PA', 'PY', 'UY', 'VE', 'BR'];
+// Country options for Latin America + USA
+const COUNTRIES = [
+  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+  { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+  { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
+  { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
+  { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
+  { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
+  { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
+  { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
+  { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
+  { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+  { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+];
 
 // Auto-detect country from IP (cached in sessionStorage)
 const detectCountry = async (): Promise<string> => {
   try {
-    // Check cache first
     const cached = sessionStorage.getItem('detected_country');
-    if (cached) {
-      console.log('[COUNTRY] Using cached:', cached);
-      return cached;
-    }
+    if (cached) return cached;
 
     const response = await fetch('https://ipapi.co/json/', { 
       signal: AbortSignal.timeout(3000) 
@@ -98,15 +114,13 @@ const detectCountry = async (): Promise<string> => {
     if (response.ok) {
       const data = await response.json();
       const countryCode = data.country_code;
-      // Return detected country if supported, otherwise default to US
-      if (SUPPORTED_COUNTRIES.includes(countryCode)) {
-        console.log('[COUNTRY] Detected:', countryCode);
+      if (COUNTRIES.some(c => c.code === countryCode)) {
         sessionStorage.setItem('detected_country', countryCode);
         return countryCode;
       }
     }
   } catch (error) {
-    console.log('[COUNTRY] Detection failed, using default US');
+    console.log('[COUNTRY] Detection failed');
   }
   return 'US';
 };
@@ -125,8 +139,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
-  const [postalCode, setPostalCode] = useState('');
-  const [detectedCountry, setDetectedCountry] = useState('US');
+  const [selectedCountry, setSelectedCountry] = useState('US');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -206,10 +219,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-detect country on mount
+  // Auto-detect country on mount and pre-select
   useEffect(() => {
     detectCountry().then(country => {
-      setDetectedCountry(country);
+      setSelectedCountry(country);
     });
   }, []);
 
@@ -532,8 +545,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           email: customerEmail,
           address: {
-            postal_code: postalCode || undefined,
-            country: detectedCountry, // Auto-detected country for AVS validation
+            country: selectedCountry,
           }
         },
       });
@@ -589,8 +601,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               name: cardholderName,
               email: customerEmail,
               address: {
-                postal_code: postalCode || undefined,
-                country: detectedCountry, // Auto-detected country for AVS validation
+                country: selectedCountry,
               }
             }
           }
@@ -767,22 +778,22 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         </div>
 
 
-        {/* Postal Code */}
+        {/* Country Selector */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Código postal
+            País de la tarjeta
           </label>
-          <Input
-            type="text"
-            placeholder="Ej: 10001, 110111"
-            value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '').slice(0, 10))}
-            className="h-12 bg-white text-black border-gray-300"
-            maxLength={10}
-          />
-          <p className="text-xs text-muted-foreground">
-            Agregar tu código postal reduce rechazos de pago
-          </p>
+          <select
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+            className="w-full h-12 px-3 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.flag} {country.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Security Notice */}
