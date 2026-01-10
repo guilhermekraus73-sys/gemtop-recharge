@@ -79,39 +79,7 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
   }
 };
 
-// Country options for target markets
-const COUNTRIES = [
-  { code: 'MX', name: 'México', flag: '🇲🇽' },
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-  { code: 'PE', name: 'Perú', flag: '🇵🇪' },
-  { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
-  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
-];
-
-// Auto-detect country from IP (cached in sessionStorage)
-const detectCountry = async (): Promise<string> => {
-  try {
-    const cached = sessionStorage.getItem('detected_country');
-    if (cached) return cached;
-
-    const response = await fetch('https://ipapi.co/json/', { 
-      signal: AbortSignal.timeout(3000) 
-    });
-    if (response.ok) {
-      const data = await response.json();
-      const countryCode = data.country_code;
-      if (COUNTRIES.some(c => c.code === countryCode)) {
-        sessionStorage.setItem('detected_country', countryCode);
-        return countryCode;
-      }
-    }
-  } catch (error) {
-    console.log('[COUNTRY] Detection failed');
-  }
-  return 'US';
-};
+// No country detection needed - using postal code instead
 
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
   priceKey,
@@ -127,7 +95,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
-  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [postalCode, setPostalCode] = useState('');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -207,12 +175,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-detect country on mount and pre-select
-  useEffect(() => {
-    detectCountry().then(country => {
-      setSelectedCountry(country);
-    });
-  }, []);
 
   // Function to record a payment attempt
   const recordPaymentAttempt = (cardLast4: string): boolean => {
@@ -533,7 +495,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           email: customerEmail,
           address: {
-            country: selectedCountry,
+            postal_code: postalCode || undefined,
           }
         },
       });
@@ -589,7 +551,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               name: cardholderName,
               email: customerEmail,
               address: {
-                country: selectedCountry,
+                postal_code: postalCode || undefined,
               }
             }
           }
@@ -766,22 +728,19 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         </div>
 
 
-        {/* Country Selector */}
+        {/* Postal Code */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            País de la tarjeta
+            Código postal
           </label>
-          <select
-            value={selectedCountry}
-            onChange={(e) => setSelectedCountry(e.target.value)}
-            className="w-full h-12 px-3 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.flag} {country.name}
-              </option>
-            ))}
-          </select>
+          <Input
+            type="text"
+            placeholder="Ej: 12345"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            className="h-12 bg-white text-black border-gray-300"
+            maxLength={10}
+          />
         </div>
 
         {/* Security Notice */}
