@@ -79,27 +79,15 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
   }
 };
 
-// Country options for Latin America + USA
+// Country options for target markets
 const COUNTRIES = [
-  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
   { code: 'MX', name: 'México', flag: '🇲🇽' },
   { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
   { code: 'PE', name: 'Perú', flag: '🇵🇪' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
-  { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
   { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
-  { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
-  { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
-  { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
-  { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
-  { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
-  { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
-  { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
-  { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
-  { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
-  { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
-  { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
 ];
 
 // Auto-detect country from IP (cached in sessionStorage)
