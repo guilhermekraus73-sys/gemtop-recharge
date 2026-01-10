@@ -79,7 +79,32 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
   }
 };
 
-// No country detection needed - using postal code instead
+// Supported countries for IP detection
+const SUPPORTED_COUNTRIES = ['US', 'MX', 'CO', 'PE', 'GT', 'CL', 'AR'];
+
+// Auto-detect country from IP (cached in sessionStorage)
+const detectCountryFromIP = async (): Promise<string> => {
+  try {
+    const cached = sessionStorage.getItem('detected_country');
+    if (cached) return cached;
+
+    const response = await fetch('https://ipapi.co/json/', { 
+      signal: AbortSignal.timeout(3000) 
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const countryCode = data.country_code;
+      if (SUPPORTED_COUNTRIES.includes(countryCode)) {
+        sessionStorage.setItem('detected_country', countryCode);
+        console.log('[COUNTRY] Detected from IP:', countryCode);
+        return countryCode;
+      }
+    }
+  } catch (error) {
+    console.log('[COUNTRY] Detection failed, using default');
+  }
+  return 'US';
+};
 
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
   priceKey,
@@ -96,6 +121,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
   const [postalCode, setPostalCode] = useState('');
+  const [detectedCountry, setDetectedCountry] = useState('US');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -175,6 +201,12 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-detect country from IP on mount
+  useEffect(() => {
+    detectCountryFromIP().then(country => {
+      setDetectedCountry(country);
+    });
+  }, []);
 
   // Function to record a payment attempt
   const recordPaymentAttempt = (cardLast4: string): boolean => {
@@ -488,6 +520,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     try {
       // Create PaymentMethod from card details with billing info to reduce declines
+      // Include both country (from IP) and postal_code for better approval rates
       const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
@@ -495,6 +528,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           email: customerEmail,
           address: {
+            country: detectedCountry,
             postal_code: postalCode || undefined,
           }
         },
@@ -551,6 +585,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               name: cardholderName,
               email: customerEmail,
               address: {
+                country: detectedCountry,
                 postal_code: postalCode || undefined,
               }
             }
