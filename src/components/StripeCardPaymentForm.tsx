@@ -24,7 +24,72 @@ interface StripeCardPaymentFormProps {
   customerName: string;
   onEmailInvalid?: () => void;
   onNameInvalid?: () => void;
+  lang?: 'es' | 'en';
 }
+
+// Translations
+const translations = {
+  es: {
+    emailRequired: 'El correo electrónico es obligatorio',
+    emailInvalid: 'Ingresa un correo electrónico válido (ej: nombre@gmail.com)',
+    nameRequired: 'El nombre completo es obligatorio',
+    paymentUnavailable: 'Pagamento temporariamente indisponível. Tente novamente em alguns minutos.',
+    loadFormError: 'Error al cargar el formulario de pago',
+    cardError: 'Error al procesar la tarjeta',
+    bankRejected: 'Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.',
+    waitSeconds: 'Por seguridad, espera {seconds} segundos antes de intentar nuevamente.',
+    paymentSuccess: '¡Pago realizado con éxito!',
+    bankCantProcess: 'Tu banco no pudo procesar el pago. Intenta con otra forma de pago o contacta a tu banco.',
+    bankVerificationFailed: 'Tu banco no pudo completar la verificación. Intenta de nuevo en unos minutos.',
+    bankRequiresVerification: 'Tu banco requiere verificación adicional',
+    bankBlockedMessage: 'Por seguridad, tu banco ha bloqueado temporalmente nuevas transacciones. Esto es normal cuando hay múltiples intentos de pago.',
+    waitOrContactBank: 'Por favor, espera unos minutos o contacta a tu banco para autorizar la compra.',
+    recommendedWaitTime: 'Tiempo de espera recomendado',
+    orPayWithCard: 'o pagar con tarjeta',
+    cardholderName: 'Nombre en la tarjeta',
+    cardholderPlaceholder: 'Como aparece en la tarjeta',
+    cardNumber: 'Número de tarjeta',
+    expiry: 'Vencimiento',
+    cvv: 'CVV',
+    postalCode: 'Código postal',
+    postalPlaceholder: 'Ej: 12345',
+    securePayment: 'Pago 100% seguro con encriptación SSL',
+    waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
+    processing: 'Procesando...',
+    wait: 'Espera {seconds}s...',
+    pay: 'PAGAR',
+  },
+  en: {
+    emailRequired: 'Email is required',
+    emailInvalid: 'Enter a valid email address (e.g., name@gmail.com)',
+    nameRequired: 'Full name is required',
+    paymentUnavailable: 'Payment temporarily unavailable. Please try again in a few minutes.',
+    loadFormError: 'Error loading payment form',
+    cardError: 'Error processing card',
+    bankRejected: 'Your bank declined the transaction. For security, please wait a few minutes before trying again.',
+    waitSeconds: 'For security, please wait {seconds} seconds before trying again.',
+    paymentSuccess: 'Payment successful!',
+    bankCantProcess: 'Your bank could not process the payment. Try another payment method or contact your bank.',
+    bankVerificationFailed: 'Your bank could not complete verification. Please try again in a few minutes.',
+    bankRequiresVerification: 'Your bank requires additional verification',
+    bankBlockedMessage: 'For security, your bank has temporarily blocked new transactions. This is normal when there are multiple payment attempts.',
+    waitOrContactBank: 'Please wait a few minutes or contact your bank to authorize the purchase.',
+    recommendedWaitTime: 'Recommended wait time',
+    orPayWithCard: 'or pay with card',
+    cardholderName: 'Name on card',
+    cardholderPlaceholder: 'As it appears on the card',
+    cardNumber: 'Card number',
+    expiry: 'Expiry',
+    cvv: 'CVV',
+    postalCode: 'Postal code',
+    postalPlaceholder: 'E.g., 12345',
+    securePayment: '100% secure payment with SSL encryption',
+    waitBeforeRetry: 'For security, wait {seconds}s before trying again',
+    processing: 'Processing...',
+    wait: 'Wait {seconds}s...',
+    pay: 'PAY',
+  }
+};
 
 const elementStyle = {
   base: {
@@ -114,8 +179,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   customerEmail,
   customerName,
   onEmailInvalid,
-  onNameInvalid
+  onNameInvalid,
+  lang = 'es'
 }) => {
+  const t = translations[lang];
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -222,7 +289,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       const cooldownEnd = attempts.lastAttemptTime + COOLDOWN_BETWEEN_ATTEMPTS_MS;
       if (Date.now() < cooldownEnd) {
         const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000);
-        toast.error(`Por seguridad, espera ${remaining} segundos antes de intentar nuevamente.`);
+        toast.error(t.waitSeconds.replace('{seconds}', String(remaining)));
         setCooldownRemaining(remaining);
         return false;
       }
@@ -235,7 +302,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     // Check if too many different cards tried (fraud pattern)
     if (attempts.uniqueCards.length > MAX_DIFFERENT_CARDS) {
-      toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
+      toast.error(t.bankRejected);
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
       attempts.lastAttemptTime = Date.now();
       savePaymentAttempts(attempts);
@@ -258,7 +325,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     const cardAttemptsForThis = attempts.cardAttempts[cardLast4];
     
     if (cardAttemptsForThis > MAX_ATTEMPTS_PER_CARD) {
-      toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
+      toast.error(t.bankRejected);
       attempts.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
       savePaymentAttempts(attempts);
       setIsBlocked(true);
@@ -482,27 +549,27 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     // Validate email before processing
     if (!customerEmail || !customerEmail.trim()) {
-      toast.error('El correo electrónico es obligatorio');
+      toast.error(t.emailRequired);
       onEmailInvalid?.();
       return;
     }
 
     if (!isValidEmail(customerEmail)) {
-      toast.error('Ingresa un correo electrónico válido (ej: nombre@gmail.com)');
+      toast.error(t.emailInvalid);
       onEmailInvalid?.();
       return;
     }
 
     // Validate name
     if (!customerName || !customerName.trim()) {
-      toast.error('El nombre completo es obligatorio');
+      toast.error(t.nameRequired);
       onNameInvalid?.();
       return;
     }
 
     // Check if blocked before processing
     if (isBlocked) {
-      toast.error('Pagamento temporariamente indisponível. Tente novamente em alguns minutos.');
+      toast.error(t.paymentUnavailable);
       return;
     }
 
@@ -512,7 +579,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     const cardNumberElement = elements.getElement(CardNumberElement);
     if (!cardNumberElement) {
-      toast.error('Error al cargar el formulario de pago');
+      toast.error(t.loadFormError);
       return;
     }
 
@@ -535,7 +602,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       });
 
       if (pmError) {
-        toast.error(pmError.message || 'Error al procesar la tarjeta');
+        toast.error(pmError.message || t.cardError);
         setIsProcessing(false);
         return;
       }
@@ -571,7 +638,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       if (data.rate_limited) {
         setIsBlocked(true);
         setBlockTimeRemaining(10 * 60); // 10 minutes
-        toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
+        toast.error(t.bankRejected);
         setIsProcessing(false);
         return;
       }
@@ -593,7 +660,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         });
         
         if (confirmError) {
-          toast.error('Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.');
+          toast.error(t.bankRejected);
           setIsProcessing(false);
           return;
         }
@@ -602,7 +669,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           clearPaymentAttempts();
           await registerUtmifySaleFor3DS(paymentIntent.id);
           trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
-          toast.success('¡Pago realizado con éxito!');
+          toast.success(t.paymentSuccess);
           onSuccess();
           return;
         }
@@ -613,19 +680,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         clearPaymentAttempts();
         logPaymentSuccess(data.paymentIntentId);
         trackFunnel('comprou', { productId: productName, source: new URLSearchParams(window.location.search).get('utm_source') || localStorage.getItem('utm_source') || null });
-        toast.success('¡Pago realizado con éxito!');
+        toast.success(t.paymentSuccess);
         onSuccess();
       } else if (data.error) {
         // Payment failed (card declined, etc.) - friendly message to reduce insistence
         const isDeclined = data.error.includes('declined') || data.error.includes('failed');
-        toast.error(isDeclined 
-          ? 'Tu banco rechazó la transacción. Por seguridad, espera unos minutos antes de intentar nuevamente.' 
-          : 'Tu banco no pudo procesar el pago. Intenta con otra forma de pago o contacta a tu banco.');
+        toast.error(isDeclined ? t.bankRejected : t.bankCantProcess);
         setIsProcessing(false);
       }
     } catch (err) {
       console.error('Payment error:', err);
-      toast.error('Tu banco no pudo completar la verificación. Intenta de nuevo en unos minutos.');
+      toast.error(t.bankVerificationFailed);
       setIsProcessing(false);
     }
   };
@@ -644,20 +709,19 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
           <Shield className="w-12 h-12 text-amber-600 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-amber-800 mb-2">
-            Tu banco requiere verificación adicional
+            {t.bankRequiresVerification}
           </h3>
           <p className="text-amber-700 mb-4">
-            Por seguridad, tu banco ha bloqueado temporalmente nuevas transacciones. 
-            Esto es normal cuando hay múltiples intentos de pago.
+            {t.bankBlockedMessage}
           </p>
           <p className="text-amber-700 mb-4">
-            Por favor, espera unos minutos o contacta a tu banco para autorizar la compra.
+            {t.waitOrContactBank}
           </p>
           <div className="text-2xl font-mono font-bold text-amber-800">
             {formatTimeRemaining(blockTimeRemaining)}
           </div>
           <p className="text-sm text-amber-600 mt-2">
-            Tiempo de espera recomendado
+            {t.recommendedWaitTime}
           </p>
         </div>
       </div>
@@ -687,7 +751,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-muted-foreground text-sm">o pagar con tarjeta</span>
+            <span className="text-muted-foreground text-sm">{t.orPayWithCard}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
         </>
@@ -698,11 +762,11 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         {/* Cardholder Name */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Nombre en la tarjeta
+            {t.cardholderName}
           </label>
           <Input
             type="text"
-            placeholder="Como aparece en la tarjeta"
+            placeholder={t.cardholderPlaceholder}
             value={cardholderName}
             onChange={(e) => setCardholderName(e.target.value)}
             className="h-12 bg-white text-black border-gray-300"
@@ -713,7 +777,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         {/* Card Number */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Número de tarjeta
+            {t.cardNumber}
           </label>
           <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
             <CardNumberElement 
@@ -738,7 +802,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="block text-foreground font-medium text-sm">
-              Vencimiento
+              {t.expiry}
             </label>
             <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
               <CardExpiryElement 
@@ -750,7 +814,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           </div>
           <div className="space-y-2">
             <label className="block text-foreground font-medium text-sm">
-              CVV
+              {t.cvv}
             </label>
             <div className="h-12 px-3 flex items-center border border-gray-300 rounded-md bg-white">
               <CardCvcElement 
@@ -766,11 +830,11 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         {/* Postal Code */}
         <div className="space-y-2">
           <label className="block text-foreground font-medium text-sm">
-            Código postal
+            {t.postalCode}
           </label>
           <Input
             type="text"
-            placeholder="Ej: 12345"
+            placeholder={t.postalPlaceholder}
             value={postalCode}
             onChange={(e) => setPostalCode(e.target.value)}
             className="h-12 bg-white text-black border-gray-300"
@@ -781,14 +845,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         {/* Security Notice */}
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <Shield className="w-4 h-4" />
-          <span>Pago 100% seguro con encriptación SSL</span>
+          <span>{t.securePayment}</span>
         </div>
 
         {/* Cooldown Notice */}
         {isOnCooldown && !isProcessing && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
             <p className="text-amber-700 text-sm">
-              Por seguridad, espera <span className="font-bold">{cooldownRemaining}s</span> antes de intentar nuevamente
+              {t.waitBeforeRetry.replace('{seconds}', String(cooldownRemaining))}
             </p>
           </div>
         )}
@@ -802,17 +866,17 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           {isProcessing ? (
             <>
               <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              Procesando...
+              {t.processing}
             </>
           ) : isOnCooldown ? (
             <>
               <Lock className="w-5 h-5" />
-              Espera {cooldownRemaining}s...
+              {t.wait.replace('{seconds}', String(cooldownRemaining))}
             </>
           ) : (
             <>
               <Lock className="w-5 h-5" />
-              PAGAR ${amount.toFixed(2)} USD
+              {t.pay} ${amount.toFixed(2)} USD
             </>
           )}
         </Button>
