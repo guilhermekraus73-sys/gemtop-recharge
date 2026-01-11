@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 
-import membershipsBanner from "@/assets/memberships-banner.jpg";
+import freefireBannerEn from "@/assets/freefire-banner-en.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
 import freefireIcon from "@/assets/freefire-character.png";
 import diamondIcon from "@/assets/diamond-icon.png";
@@ -35,7 +35,7 @@ const IdPlayerEn: React.FC = () => {
       <main className="flex-1 max-w-lg mx-auto w-full p-4">
         {/* Banner */}
         <div className="rounded-xl overflow-hidden mb-6">
-          <img src={membershipsBanner} alt="Memberships" className="w-full h-auto" />
+          <img src={freefireBannerEn} alt="Diamonds at a Discount" className="w-full h-auto" />
         </div>
 
         {/* Game Selection */}
