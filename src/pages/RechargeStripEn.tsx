@@ -31,12 +31,6 @@ const packages: Package[] = [
 
 const paymentMethods = [
   { id: "credit", name: "Credit / Debit", type: "cards" },
-  { id: "nequi", name: "NEQUI", logo: paymentNequi },
-  { id: "yape", name: "Yape", logo: paymentYape },
-  { id: "mercadopago", name: "MercadoPago", logo: paymentMercadopago },
-  { id: "efecty", name: "Efecty Bancolombia", logos: [paymentEfecty, paymentBancolombia] },
-  { id: "paypal", name: "PayPal", logo: paymentPaypal },
-  { id: "pse", name: "PSE", logo: paymentPse },
 ];
 
 const RechargeStripEn: React.FC = () => {
@@ -164,49 +158,23 @@ const RechargeStripEn: React.FC = () => {
             <span className="font-semibold text-foreground">Payment Method</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => setSelectedPayment(method.id)}
-                className={
-                  "payment-card flex flex-col items-center justify-center min-h-[70px] text-center " +
-                  (selectedPayment === method.id ? "selected" : "")
-                }
-              >
-                <span className="promo-badge">PROMO</span>
-
-                {method.type === "cards" && (
-                  <>
-                    <span className="text-[10px] font-medium text-foreground mb-1">{method.name}</span>
-                    <div className="flex gap-1">
-                      <span className="text-[8px] px-1 bg-muted rounded">ELO</span>
-                      <span className="text-[8px] px-1 bg-muted rounded">VISA</span>
-                      <span className="text-[8px] px-1 bg-muted rounded">MC</span>
-                      <span className="text-[8px] px-1 bg-muted rounded">AMEX</span>
-                    </div>
-                  </>
-                )}
-
-                {method.logo && (
-                  <>
-                    <img src={method.logo} alt={method.name} className="h-10 mb-1 object-contain max-w-[60px]" />
-                    <span className="text-[10px] text-muted-foreground">{method.name}</span>
-                  </>
-                )}
-
-                {method.logos && (
-                  <>
-                    <div className="flex gap-1 mb-1">
-                      {method.logos.map((logo: string, idx: number) => (
-                        <img key={idx} src={logo} alt="" className="h-8 object-contain max-w-[45px]" />
-                      ))}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{method.name}</span>
-                  </>
-                )}
-              </button>
-            ))}
+          <div className="flex justify-center">
+            <button
+              onClick={() => setSelectedPayment("credit")}
+              className={
+                "payment-card flex flex-col items-center justify-center min-h-[70px] text-center px-6 " +
+                (selectedPayment === "credit" ? "selected" : "")
+              }
+            >
+              <span className="promo-badge">PROMO</span>
+              <span className="text-[10px] font-medium text-foreground mb-1">Credit / Debit</span>
+              <div className="flex gap-1">
+                <span className="text-[8px] px-1 bg-muted rounded">ELO</span>
+                <span className="text-[8px] px-1 bg-muted rounded">VISA</span>
+                <span className="text-[8px] px-1 bg-muted rounded">MC</span>
+                <span className="text-[8px] px-1 bg-muted rounded">AMEX</span>
+              </div>
+            </button>
           </div>
         </section>
 
