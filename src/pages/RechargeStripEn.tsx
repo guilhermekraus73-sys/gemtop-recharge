@@ -5,7 +5,7 @@ import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
 import freefireBannerEn from "@/assets/freefire-banner-en.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
 import freefireIcon from "@/assets/freefire-character.png";
-import freefireBanner from "@/assets/freefire-banner.png";
+import freefireBannerSecureEn from "@/assets/freefire-banner-secure-en.png";
 import diamondIcon from "@/assets/diamond-icon.png";
 import paymentNequi from "@/assets/payment-nequi.png";
 import paymentYape from "@/assets/payment-yape.png";
@@ -96,7 +96,7 @@ const RechargeStripEn: React.FC = () => {
 
           {/* Main game banner */}
           <div className="rounded-xl overflow-hidden">
-            <img src={freefireBanner} alt="Free Fire - 100% Secure Payment" className="w-full h-auto" />
+            <img src={freefireBannerSecureEn} alt="Free Fire - 100% Secure Payment" className="w-full h-auto" />
           </div>
         </section>
 
