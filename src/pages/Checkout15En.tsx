@@ -6,7 +6,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
-import membershipsBanner from '@/assets/memberships-banner.jpg';
+import freefireBannerEn from '@/assets/freefire-banner-en.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 import { track, trackFunnel } from '@/hooks/useFunnelTracking';
 
@@ -119,8 +119,8 @@ const Checkout15En: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
           <img
-            src={membershipsBanner}
-            alt="Discover Free Fire Memberships!"
+            src={freefireBannerEn}
+            alt="Diamonds at a Discount"
             className="w-full rounded-lg shadow-lg"
           />
         </div>
