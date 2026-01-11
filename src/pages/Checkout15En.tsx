@@ -190,6 +190,7 @@ const Checkout15En: React.FC = () => {
                 productName={`${diamonds.toLocaleString()} Diamonds Free Fire`}
                 customerEmail={email.trim()}
                 customerName={fullName}
+                lang="en"
                 onEmailInvalid={() => {
                   setEmailTouched(true);
                   if (!email.trim()) {
