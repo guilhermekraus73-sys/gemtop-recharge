@@ -10,7 +10,7 @@ import freefireBannerEn from '@/assets/freefire-banner-en.jpg';
 import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
 import { track, trackFunnel } from '@/hooks/useFunnelTracking';
 
-const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
+const stripePromise = loadStripe('pk_live_51SpalPJuI6JxdCYqQWQzcLFBvPCF0TlAQVrQYoXzigDiOTWYWtQfHgWeLcQqYrAqIphnZx0U2zripyMuDtHpfdNp00tPNbhsrR');
 
 // Email validation regex
 const isValidEmail = (email: string): boolean => {
