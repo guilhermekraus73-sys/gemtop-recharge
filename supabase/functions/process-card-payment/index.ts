@@ -373,18 +373,24 @@ serve(async (req) => {
 
     console.log("[PROCESS-CARD-PAYMENT] Creating and confirming PaymentIntent for amount:", priceData.amount);
 
-    // Build shipping/billing address if provided (for AVS verification)
-    const shippingDetails = billingAddress ? {
+    // Build billing address for AVS verification - use data from wallet or passed billing address
+    const effectiveBillingAddress = {
+      line1: billingAddress?.line1 || existingBillingDetails?.address?.line1 || undefined,
+      line2: billingAddress?.line2 || existingBillingDetails?.address?.line2 || undefined,
+      city: billingAddress?.city || existingBillingDetails?.address?.city || undefined,
+      state: billingAddress?.state || existingBillingDetails?.address?.state || undefined,
+      postal_code: billingAddress?.postal_code || existingBillingDetails?.address?.postal_code || undefined,
+      country: billingAddress?.country || existingBillingDetails?.address?.country || 'US',
+    };
+
+    console.log("[PROCESS-CARD-PAYMENT] Effective billing address for AVS:", JSON.stringify(effectiveBillingAddress));
+
+    // Build shipping details if we have address data (helps with fraud detection)
+    const hasAddressData = effectiveBillingAddress.line1 || effectiveBillingAddress.postal_code;
+    const shippingDetails = hasAddressData ? {
       shipping: {
-        name: name || 'Customer',
-        address: {
-          line1: billingAddress.line1 || undefined,
-          line2: billingAddress.line2 || undefined,
-          city: billingAddress.city || undefined,
-          state: billingAddress.state || undefined,
-          postal_code: billingAddress.postal_code || undefined,
-          country: billingAddress.country || 'US',
-        }
+        name: name || existingBillingDetails?.name || 'Customer',
+        address: effectiveBillingAddress
       }
     } : {};
 
@@ -410,10 +416,10 @@ serve(async (req) => {
         product_type: 'digital_goods',
         product_name: 'Diamantes Free Fire',
         source: 'checkout_form',
-        billing_line1: billingAddress?.line1 || '',
-        billing_city: billingAddress?.city || '',
-        billing_postal_code: billingAddress?.postal_code || '',
-        billing_country: billingAddress?.country || '',
+        billing_line1: effectiveBillingAddress.line1 || '',
+        billing_city: effectiveBillingAddress.city || '',
+        billing_postal_code: effectiveBillingAddress.postal_code || '',
+        billing_country: effectiveBillingAddress.country || '',
       },
       // Description helps with Radar rules and customer statements
       description: `${priceData.diamonds} Diamantes Free Fire`,
