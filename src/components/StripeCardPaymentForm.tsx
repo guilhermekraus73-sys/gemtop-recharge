@@ -53,9 +53,6 @@ const translations = {
     cvv: 'CVV',
     postalCode: 'Código postal',
     postalPlaceholder: 'Ej: 12345',
-    address: 'Dirección de facturación (solo para verificación)',
-    addressPlaceholder: 'Ej: Calle Principal 123',
-    addressNotice: '🔒 Usamos esta dirección solo para verificar la tarjeta. No se enviará ningún producto físico.',
     securePayment: 'Pago 100% seguro con encriptación SSL',
     waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
     processing: 'Procesando...',
@@ -86,9 +83,6 @@ const translations = {
     cvv: 'CVV',
     postalCode: 'Postal code',
     postalPlaceholder: 'E.g., 12345',
-    address: 'Billing address (for verification only)',
-    addressPlaceholder: 'E.g., 123 Main Street',
-    addressNotice: '🔒 We use this address only to verify the card. No physical product will be shipped.',
     securePayment: '100% secure payment with SSL encryption',
     waitBeforeRetry: 'For security, wait {seconds}s before trying again',
     processing: 'Processing...',
@@ -194,7 +188,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
   const [postalCode, setPostalCode] = useState('');
-  const [address, setAddress] = useState('');
   const [detectedCountry, setDetectedCountry] = useState('US');
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
@@ -847,28 +840,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
             className="h-12 bg-white text-black border-gray-300"
             maxLength={10}
           />
-        </div>
-
-        {/* Address */}
-        <div className="space-y-2">
-          <label className="block text-foreground font-medium text-sm">
-            {t.address}
-          </label>
-          <Input
-            type="text"
-            placeholder={t.addressPlaceholder}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="h-12 bg-white text-black border-gray-300"
-            maxLength={100}
-          />
-        </div>
-
-        {/* Address Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-          <p className="text-blue-700 text-sm">
-            {t.addressNotice}
-          </p>
         </div>
 
         {/* Security Notice */}
