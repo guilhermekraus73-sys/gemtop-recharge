@@ -493,6 +493,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       },
       requestPayerName: true,
       requestPayerEmail: true,
+      requestShipping: false,
     });
 
     // Check immediately without waiting
@@ -513,16 +514,30 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
 
     const handlePaymentMethod = async (ev: any) => {
       console.log('[PAYMENT] PaymentMethod from wallet:', ev.paymentMethod.id);
+      console.log('[PAYMENT] Wallet billing details:', ev.paymentMethod.billing_details);
       
       try {
         const trackingParams = getUtmParams();
+        
+        // Extract billing details from wallet payment
+        const billingDetails = ev.paymentMethod.billing_details || {};
+        const billingAddress = billingDetails.address || {};
+        
         const { data, error } = await supabase.functions.invoke('process-card-payment', {
           body: {
             paymentMethodId: ev.paymentMethod.id,
             priceKey,
-            email: ev.payerEmail || customerEmail,
-            name: ev.payerName || customerName,
+            email: ev.payerEmail || billingDetails.email || customerEmail,
+            name: ev.payerName || billingDetails.name || customerName,
             trackingParams,
+            billingAddress: {
+              line1: billingAddress.line1 || null,
+              line2: billingAddress.line2 || null,
+              city: billingAddress.city || null,
+              state: billingAddress.state || null,
+              postal_code: billingAddress.postal_code || null,
+              country: billingAddress.country || null,
+            }
           }
         });
 

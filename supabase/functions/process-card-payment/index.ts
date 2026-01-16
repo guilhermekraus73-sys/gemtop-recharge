@@ -287,7 +287,7 @@ serve(async (req) => {
   const clientIP = getClientIP(req);
 
   try {
-    const { paymentMethodId, priceKey, email, name, trackingParams } = await req.json();
+    const { paymentMethodId, priceKey, email, name, trackingParams, billingAddress } = await req.json();
     
     console.log("[PROCESS-CARD-PAYMENT] Request received", { 
       paymentMethodId, 
@@ -295,7 +295,8 @@ serve(async (req) => {
       email, 
       name, 
       clientIP,
-      trackingParams 
+      trackingParams,
+      billingAddress
     });
 
     if (!paymentMethodId) {
@@ -344,6 +345,21 @@ serve(async (req) => {
 
     console.log("[PROCESS-CARD-PAYMENT] Creating and confirming PaymentIntent for amount:", priceData.amount);
 
+    // Build shipping/billing address if provided (for AVS verification)
+    const shippingDetails = billingAddress ? {
+      shipping: {
+        name: name || 'Customer',
+        address: {
+          line1: billingAddress.line1 || undefined,
+          line2: billingAddress.line2 || undefined,
+          city: billingAddress.city || undefined,
+          state: billingAddress.state || undefined,
+          postal_code: billingAddress.postal_code || undefined,
+          country: billingAddress.country || 'US',
+        }
+      }
+    } : {};
+
     // Create PaymentIntent with the PaymentMethod and confirm immediately
     // Include metadata for Stripe Radar to reduce false positives
     const paymentIntent = await stripe.paymentIntents.create({
@@ -355,6 +371,7 @@ serve(async (req) => {
         enabled: true,
         allow_redirects: 'never', // Don't allow redirects for this flow
       },
+      ...shippingDetails,
       // Metadata helps Stripe Radar understand the transaction is legitimate
       metadata: {
         customer_name: name || '',
@@ -365,6 +382,10 @@ serve(async (req) => {
         product_type: 'digital_goods',
         product_name: 'Diamantes Free Fire',
         source: 'checkout_form',
+        billing_line1: billingAddress?.line1 || '',
+        billing_city: billingAddress?.city || '',
+        billing_postal_code: billingAddress?.postal_code || '',
+        billing_country: billingAddress?.country || '',
       },
       // Description helps with Radar rules and customer statements
       description: `${priceData.diamonds} Diamantes Free Fire`,
