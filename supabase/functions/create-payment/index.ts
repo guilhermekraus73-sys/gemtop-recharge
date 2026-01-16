@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price mapping for each package
+// Price mapping for each package - Bono de Diamantes Free Fire
 const PRICES: Record<string, string> = {
-  "9": "price_1Sq0cyJuI6JxdCYqha9HcpgN",    // $9.00 - 5600 diamonds
-  "15": "price_1Sq0dDJuI6JxdCYqmYBnxkEp",   // $15.90 - 11200 diamonds
-  "19": "price_1Sq0dQJuI6JxdCYqxH5JwX80",   // $19.00 - 22400 diamonds
+  "9": "price_1Sq0fJJuI6JxdCYqrkkTcDs0",    // $9.00 - 5600 diamonds
+  "15": "price_1Sq0fVJuI6JxdCYq3Z1PVkX9",   // $15.90 - 11200 diamonds
+  "19": "price_1Sq0flJuI6JxdCYqRzV7PaBm",   // $19.00 - 22400 diamonds
 };
 
 serve(async (req) => {
