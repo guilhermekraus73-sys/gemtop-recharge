@@ -53,6 +53,9 @@ const translations = {
     cvv: 'CVV',
     postalCode: 'Código postal',
     postalPlaceholder: 'Ej: 12345',
+    billingAddress: 'Dirección de facturación (solo para verificación)',
+    billingAddressPlaceholder: 'Ej: Calle Principal 123',
+    addressVerificationNotice: 'Usamos esta dirección solo para verificar la tarjeta. No se enviará ningún producto físico.',
     lookingUpAddress: 'Buscando dirección...',
     securePayment: 'Pago 100% seguro con encriptación SSL',
     waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
@@ -84,6 +87,9 @@ const translations = {
     cvv: 'CVV',
     postalCode: 'Postal code',
     postalPlaceholder: 'E.g., 12345',
+    billingAddress: 'Billing address (for verification only)',
+    billingAddressPlaceholder: 'E.g., 123 Main Street',
+    addressVerificationNotice: 'We use this address only to verify your card. No physical product will be shipped.',
     lookingUpAddress: 'Looking up address...',
     securePayment: '100% secure payment with SSL encryption',
     waitBeforeRetry: 'For security, wait {seconds}s before trying again',
@@ -236,6 +242,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
   const [postalCode, setPostalCode] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
   const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<DetectedAddress>({ country: 'US', city: '', region: '', postal: '', line1: '' });
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
@@ -648,7 +655,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
             city: detectedAddress.city || undefined,
             state: detectedAddress.region || undefined,
             postal_code: postalCode || detectedAddress.postal || undefined,
-            line1: detectedAddress.line1 || undefined,
+            line1: billingAddress || detectedAddress.line1 || undefined,
           }
         },
       });
@@ -708,7 +715,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
                 city: detectedAddress.city || undefined,
                 state: detectedAddress.region || undefined,
                 postal_code: postalCode || detectedAddress.postal || undefined,
-                line1: detectedAddress.line1 || undefined,
+                line1: billingAddress || detectedAddress.line1 || undefined,
               }
             }
           }
@@ -922,6 +929,28 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               📍 {detectedAddress.city}{detectedAddress.region ? `, ${detectedAddress.region}` : ''}, {detectedAddress.country}
             </p>
           )}
+        </div>
+
+        {/* Billing Address */}
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            {t.billingAddress}
+          </label>
+          <Input
+            type="text"
+            placeholder={t.billingAddressPlaceholder}
+            value={billingAddress}
+            onChange={(e) => setBillingAddress(e.target.value)}
+            className="h-12 bg-white text-black border-gray-300"
+          />
+        </div>
+
+        {/* Address Verification Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-blue-700 text-sm flex items-start gap-2">
+            <span className="text-lg">🔒</span>
+            <span>{t.addressVerificationNotice}</span>
+          </p>
         </div>
 
         {/* Security Notice */}
