@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 // Price mapping for each package (amount in cents)
-const PRICES: Record<string, { amount: number; diamonds: number }> = {
-  "9": { amount: 900, diamonds: 5600 },      // $9.00
-  "15": { amount: 1590, diamonds: 11200 },   // $15.90
-  "19": { amount: 1900, diamonds: 22400 },   // $19.00
+const PRICES: Record<string, { amount: number; diamonds: number; priceId: string }> = {
+  "9": { amount: 900, diamonds: 5600, priceId: "price_1Sq0cyJuI6JxdCYqha9HcpgN" },      // $9.00
+  "15": { amount: 1590, diamonds: 11200, priceId: "price_1Sq0dDJuI6JxdCYqmYBnxkEp" },   // $15.90
+  "19": { amount: 1900, diamonds: 22400, priceId: "price_1Sq0dQJuI6JxdCYqxH5JwX80" },   // $19.00
 };
 
 serve(async (req) => {
