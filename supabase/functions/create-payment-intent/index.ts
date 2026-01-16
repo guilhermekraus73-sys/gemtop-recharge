@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 // Price mapping for each package - Método de Mejores Prácticas (amount in cents)
-const PRICES: Record<string, { amount: number; diamonds: number; priceId: string }> = {
-  "9": { amount: 900, diamonds: 5600, priceId: "price_1SqCc6DSZSnaeaRa1lN1Zk0U" },      // $9.00 - Método de Mejores Prácticas
-  "15": { amount: 1590, diamonds: 11200, priceId: "price_1SqCcGDSZSnaeaRaaPSXLLok" },   // $15.90 - Método de Mejores Prácticas Plus
-  "19": { amount: 1900, diamonds: 22400, priceId: "price_1SqCcRDSZSnaeaRaVBU38GeB" },   // $19.00 - Método de Mejores Prácticas Pro
+const PRICES: Record<string, { amount: number; description: string; priceId: string }> = {
+  "9": { amount: 900, description: "Método de Mejores Prácticas", priceId: "price_1SqCc6DSZSnaeaRa1lN1Zk0U" },      // $9.00
+  "15": { amount: 1590, description: "Método de Mejores Prácticas Plus", priceId: "price_1SqCcGDSZSnaeaRaaPSXLLok" },   // $15.90
+  "19": { amount: 1900, description: "Método de Mejores Prácticas Pro", priceId: "price_1SqCcRDSZSnaeaRaVBU38GeB" },   // $19.00
 };
 
 serve(async (req) => {
@@ -44,7 +44,7 @@ serve(async (req) => {
       metadata: {
         customer_name: name || '',
         customer_email: email || '',
-        diamonds: priceData.diamonds.toString(),
+        product: priceData.description,
         price_key: priceKey,
       },
       receipt_email: email || undefined,

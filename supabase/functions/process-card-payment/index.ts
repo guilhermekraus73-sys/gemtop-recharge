@@ -15,12 +15,12 @@ const MAX_DIFFERENT_CARDS_PER_IP = 3;   // Max different cards per IP (fraud det
 const MAX_DIFFERENT_CARDS_PER_EMAIL = 3; // Max different cards per email (fraud detection)
 const TIME_WINDOW_MINUTES = 10;         // Time window in minutes
 
-// Price mapping for each package (amount in cents)
-const PRICES: Record<string, { amount: number; diamonds: number }> = {
-  "1": { amount: 100, diamonds: 2800 },      // $1.00
-  "9": { amount: 900, diamonds: 5600 },      // $9.00
-  "15": { amount: 1590, diamonds: 11200 },   // $15.90
-  "19": { amount: 1900, diamonds: 22400 },   // $19.00
+// Price mapping for each package - Método de Mejores Prácticas (amount in cents)
+const PRICES: Record<string, { amount: number; description: string }> = {
+  "1": { amount: 100, description: "Método de Mejores Prácticas - Test" },      // $1.00
+  "9": { amount: 900, description: "Método de Mejores Prácticas" },      // $9.00
+  "15": { amount: 1590, description: "Método de Mejores Prácticas Plus" },   // $15.90
+  "19": { amount: 1900, description: "Método de Mejores Prácticas Pro" },   // $19.00
 };
 
 // Create Supabase client with service role for database access
@@ -236,7 +236,7 @@ async function registerUtmifySale(data: {
       products: [
         {
           id: data.orderId,
-          name: data.productName || "Diamantes Free Fire",
+          name: data.productName || "Método de Mejores Prácticas",
           planId: null,
           planName: null,
           quantity: 1,
@@ -410,11 +410,11 @@ serve(async (req) => {
       metadata: {
         customer_name: name || '',
         customer_email: email || '',
-        diamonds: priceData.diamonds.toString(),
+        product: priceData.description,
         price_key: priceKey,
         client_ip: clientIP,
         product_type: 'digital_goods',
-        product_name: 'Diamantes Free Fire',
+        product_name: priceData.description,
         source: 'checkout_form',
         billing_line1: effectiveBillingAddress.line1 || '',
         billing_city: effectiveBillingAddress.city || '',
@@ -422,7 +422,7 @@ serve(async (req) => {
         billing_country: effectiveBillingAddress.country || '',
       },
       // Description helps with Radar rules and customer statements
-      description: `${priceData.diamonds} Diamantes Free Fire`,
+      description: priceData.description,
       receipt_email: email || undefined,
       return_url: `${req.headers.get("origin") || 'https://recargadediamantesoficial.online'}/obrigado`,
     });
@@ -452,7 +452,7 @@ serve(async (req) => {
         email: email || '',
         name: name || '',
         value: priceData.amount / 100, // Convert cents to dollars
-        productName: `${priceData.diamonds} Diamantes Free Fire`,
+        productName: priceData.description,
         trackingParams,
       });
 
