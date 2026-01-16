@@ -51,6 +51,9 @@ const translations = {
     cardNumber: 'Número de tarjeta',
     expiry: 'Vencimiento',
     cvv: 'CVV',
+    postalCode: 'Código postal',
+    postalPlaceholder: 'Ej: 12345',
+    lookingUpAddress: 'Buscando dirección...',
     securePayment: 'Pago 100% seguro con encriptación SSL',
     waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
     processing: 'Procesando...',
@@ -79,6 +82,9 @@ const translations = {
     cardNumber: 'Card number',
     expiry: 'Expiry',
     cvv: 'CVV',
+    postalCode: 'Postal code',
+    postalPlaceholder: 'E.g., 12345',
+    lookingUpAddress: 'Looking up address...',
     securePayment: '100% secure payment with SSL encryption',
     waitBeforeRetry: 'For security, wait {seconds}s before trying again',
     processing: 'Processing...',
@@ -149,11 +155,43 @@ interface DetectedAddress {
   city: string;
   region: string;
   postal: string;
+  line1: string;
 }
+
+// Lookup address from postal code using multiple APIs
+const lookupAddressFromPostal = async (postalCode: string, countryHint: string): Promise<DetectedAddress | null> => {
+  const cleanPostal = postalCode.replace(/\s/g, '');
+  
+  // Try Zippopotam API (free, works for US, MX, and many countries)
+  try {
+    const response = await fetch(`https://api.zippopotam.us/${countryHint.toLowerCase()}/${cleanPostal}`, {
+      signal: AbortSignal.timeout(3000)
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.places && data.places.length > 0) {
+        const place = data.places[0];
+        const address: DetectedAddress = {
+          country: data['country abbreviation'] || countryHint,
+          city: place['place name'] || '',
+          region: place['state abbreviation'] || place.state || '',
+          postal: cleanPostal,
+          line1: place['place name'] || '',
+        };
+        console.log('[ADDRESS] Found from postal:', address);
+        return address;
+      }
+    }
+  } catch (error) {
+    console.log('[ADDRESS] Zippopotam lookup failed');
+  }
+
+  return null;
+};
 
 // Auto-detect location from IP (cached in sessionStorage)
 const detectLocationFromIP = async (): Promise<DetectedAddress> => {
-  const defaultAddress: DetectedAddress = { country: 'US', city: '', region: '', postal: '' };
+  const defaultAddress: DetectedAddress = { country: 'US', city: '', region: '', postal: '', line1: '' };
   
   try {
     const cached = sessionStorage.getItem('detected_address');
@@ -169,6 +207,7 @@ const detectLocationFromIP = async (): Promise<DetectedAddress> => {
         city: data.city || '',
         region: data.region || '',
         postal: data.postal || '',
+        line1: data.city || '',
       };
       sessionStorage.setItem('detected_address', JSON.stringify(address));
       console.log('[LOCATION] Detected from IP:', address);
@@ -196,7 +235,9 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
-  const [detectedAddress, setDetectedAddress] = useState<DetectedAddress>({ country: 'US', city: '', region: '', postal: '' });
+  const [postalCode, setPostalCode] = useState('');
+  const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
+  const [detectedAddress, setDetectedAddress] = useState<DetectedAddress>({ country: 'US', city: '', region: '', postal: '', line1: '' });
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -606,7 +647,8 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
             country: detectedAddress.country,
             city: detectedAddress.city || undefined,
             state: detectedAddress.region || undefined,
-            postal_code: detectedAddress.postal || undefined,
+            postal_code: postalCode || detectedAddress.postal || undefined,
+            line1: detectedAddress.line1 || undefined,
           }
         },
       });
@@ -665,7 +707,8 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
                 country: detectedAddress.country,
                 city: detectedAddress.city || undefined,
                 state: detectedAddress.region || undefined,
-                postal_code: detectedAddress.postal || undefined,
+                postal_code: postalCode || detectedAddress.postal || undefined,
+                line1: detectedAddress.line1 || undefined,
               }
             }
           }
@@ -836,6 +879,49 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Postal Code */}
+        <div className="space-y-2">
+          <label className="block text-foreground font-medium text-sm">
+            {t.postalCode}
+          </label>
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder={t.postalPlaceholder}
+              value={postalCode}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setPostalCode(value);
+                
+                // Lookup address when postal code has enough digits (5+)
+                if (value.replace(/\s/g, '').length >= 5) {
+                  setIsLookingUpAddress(true);
+                  const address = await lookupAddressFromPostal(value, detectedAddress.country);
+                  if (address) {
+                    setDetectedAddress(prev => ({
+                      ...prev,
+                      ...address,
+                    }));
+                  }
+                  setIsLookingUpAddress(false);
+                }
+              }}
+              className="h-12 bg-white text-black border-gray-300"
+              maxLength={10}
+            />
+            {isLookingUpAddress && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+          {detectedAddress.city && postalCode.length >= 5 && (
+            <p className="text-xs text-muted-foreground">
+              📍 {detectedAddress.city}{detectedAddress.region ? `, ${detectedAddress.region}` : ''}, {detectedAddress.country}
+            </p>
+          )}
         </div>
 
         {/* Security Notice */}
