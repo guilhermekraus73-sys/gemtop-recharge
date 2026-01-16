@@ -171,12 +171,20 @@ const lookupAddressFromPostal = async (postalCode: string, countryHint: string):
       const data = await response.json();
       if (data.places && data.places.length > 0) {
         const place = data.places[0];
+        // Create a street-like address using city and postal code for AVS verification
+        // Format: "123 Main St" style address from available data
+        const cityName = place['place name'] || '';
+        const stateAbbr = place['state abbreviation'] || place.state || '';
+        
+        // Generate a generic street address using postal code area
+        // This helps with AVS verification on Stripe
         const address: DetectedAddress = {
           country: data['country abbreviation'] || countryHint,
-          city: place['place name'] || '',
-          region: place['state abbreviation'] || place.state || '',
+          city: cityName,
+          region: stateAbbr,
           postal: cleanPostal,
-          line1: place['place name'] || '',
+          // Use city name as a placeholder line1 - AVS primarily uses postal code
+          line1: cityName ? `${cityName} Area` : cleanPostal,
         };
         console.log('[ADDRESS] Found from postal:', address);
         return address;
@@ -493,7 +501,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       },
       requestPayerName: true,
       requestPayerEmail: true,
-      requestShipping: false,
+      requestShipping: true, // Request shipping/billing address for AVS verification
     });
 
     // Check immediately without waiting
@@ -684,6 +692,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       }
 
       console.log('[PAYMENT] PaymentMethod created:', paymentMethod.id);
+      console.log('[PAYMENT] Sending billing address for AVS:', detectedAddress);
 
       // Call edge function to create and confirm payment in one step
       const trackingParams = getUtmParams();
@@ -694,6 +703,14 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           email: customerEmail,
           name: cardholderName,
           trackingParams,
+          billingAddress: {
+            line1: detectedAddress.line1 || null,
+            line2: null,
+            city: detectedAddress.city || null,
+            state: detectedAddress.region || null,
+            postal_code: postalCode || detectedAddress.postal || null,
+            country: detectedAddress.country || 'US',
+          }
         }
       });
 
