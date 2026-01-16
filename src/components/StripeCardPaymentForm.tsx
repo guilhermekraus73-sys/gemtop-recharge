@@ -51,8 +51,6 @@ const translations = {
     cardNumber: 'Número de tarjeta',
     expiry: 'Vencimiento',
     cvv: 'CVV',
-    postalCode: 'Código postal',
-    postalPlaceholder: 'Ej: 12345',
     securePayment: 'Pago 100% seguro con encriptación SSL',
     waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
     processing: 'Procesando...',
@@ -81,8 +79,6 @@ const translations = {
     cardNumber: 'Card number',
     expiry: 'Expiry',
     cvv: 'CVV',
-    postalCode: 'Postal code',
-    postalPlaceholder: 'E.g., 12345',
     securePayment: '100% secure payment with SSL encryption',
     waitBeforeRetry: 'For security, wait {seconds}s before trying again',
     processing: 'Processing...',
@@ -147,28 +143,41 @@ const savePaymentAttempts = (attempts: { totalAttempts: number; cardAttempts: Re
 // Supported countries for IP detection
 const SUPPORTED_COUNTRIES = ['US', 'MX', 'CO', 'PE', 'GT', 'CL', 'AR'];
 
-// Auto-detect country from IP (cached in sessionStorage)
-const detectCountryFromIP = async (): Promise<string> => {
+// Auto-detected address info interface
+interface DetectedAddress {
+  country: string;
+  city: string;
+  region: string;
+  postal: string;
+}
+
+// Auto-detect location from IP (cached in sessionStorage)
+const detectLocationFromIP = async (): Promise<DetectedAddress> => {
+  const defaultAddress: DetectedAddress = { country: 'US', city: '', region: '', postal: '' };
+  
   try {
-    const cached = sessionStorage.getItem('detected_country');
-    if (cached) return cached;
+    const cached = sessionStorage.getItem('detected_address');
+    if (cached) return JSON.parse(cached);
 
     const response = await fetch('https://ipapi.co/json/', { 
       signal: AbortSignal.timeout(3000) 
     });
     if (response.ok) {
       const data = await response.json();
-      const countryCode = data.country_code;
-      if (SUPPORTED_COUNTRIES.includes(countryCode)) {
-        sessionStorage.setItem('detected_country', countryCode);
-        console.log('[COUNTRY] Detected from IP:', countryCode);
-        return countryCode;
-      }
+      const address: DetectedAddress = {
+        country: data.country_code || 'US',
+        city: data.city || '',
+        region: data.region || '',
+        postal: data.postal || '',
+      };
+      sessionStorage.setItem('detected_address', JSON.stringify(address));
+      console.log('[LOCATION] Detected from IP:', address);
+      return address;
     }
   } catch (error) {
-    console.log('[COUNTRY] Detection failed, using default');
+    console.log('[LOCATION] Detection failed, using default');
   }
-  return 'US';
+  return defaultAddress;
 };
 
 const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({ 
@@ -187,8 +196,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
-  const [postalCode, setPostalCode] = useState('');
-  const [detectedCountry, setDetectedCountry] = useState('US');
+  const [detectedAddress, setDetectedAddress] = useState<DetectedAddress>({ country: 'US', city: '', region: '', postal: '' });
   const [cardNumberComplete, setCardNumberComplete] = useState(false);
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
   const [cardCvcComplete, setCardCvcComplete] = useState(false);
@@ -268,10 +276,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-detect country from IP on mount
+  // Auto-detect location from IP on mount
   useEffect(() => {
-    detectCountryFromIP().then(country => {
-      setDetectedCountry(country);
+    detectLocationFromIP().then(address => {
+      setDetectedAddress(address);
     });
   }, []);
 
@@ -595,8 +603,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           email: customerEmail,
           address: {
-            country: detectedCountry,
-            postal_code: postalCode || undefined,
+            country: detectedAddress.country,
+            city: detectedAddress.city || undefined,
+            state: detectedAddress.region || undefined,
+            postal_code: detectedAddress.postal || undefined,
           }
         },
       });
@@ -652,8 +662,10 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               name: cardholderName,
               email: customerEmail,
               address: {
-                country: detectedCountry,
-                postal_code: postalCode || undefined,
+                country: detectedAddress.country,
+                city: detectedAddress.city || undefined,
+                state: detectedAddress.region || undefined,
+                postal_code: detectedAddress.postal || undefined,
               }
             }
           }
@@ -824,22 +836,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               />
             </div>
           </div>
-        </div>
-
-
-        {/* Postal Code */}
-        <div className="space-y-2">
-          <label className="block text-foreground font-medium text-sm">
-            {t.postalCode}
-          </label>
-          <Input
-            type="text"
-            placeholder={t.postalPlaceholder}
-            value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value)}
-            className="h-12 bg-white text-black border-gray-300"
-            maxLength={10}
-          />
         </div>
 
         {/* Security Notice */}
