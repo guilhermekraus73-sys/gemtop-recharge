@@ -313,14 +313,42 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Get card last 4 digits from PaymentMethod
+    // Get card last 4 digits from PaymentMethod and check existing billing details
     let cardLast4: string | undefined;
+    let existingBillingDetails: any = null;
     try {
       const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
       cardLast4 = paymentMethod.card?.last4;
+      existingBillingDetails = paymentMethod.billing_details;
       console.log("[PROCESS-CARD-PAYMENT] Card last 4:", cardLast4);
+      console.log("[PROCESS-CARD-PAYMENT] PaymentMethod billing_details:", JSON.stringify(existingBillingDetails));
     } catch (e) {
       console.log("[PROCESS-CARD-PAYMENT] Could not retrieve card info:", e);
+    }
+
+    // If billingAddress was provided from frontend but PaymentMethod doesn't have it,
+    // update the PaymentMethod with billing details for AVS verification
+    if (billingAddress && (billingAddress.line1 || billingAddress.postal_code)) {
+      try {
+        console.log("[PROCESS-CARD-PAYMENT] Updating PaymentMethod with billing address:", JSON.stringify(billingAddress));
+        await stripe.paymentMethods.update(paymentMethodId, {
+          billing_details: {
+            name: name || existingBillingDetails?.name || 'Customer',
+            email: email || existingBillingDetails?.email || undefined,
+            address: {
+              line1: billingAddress.line1 || existingBillingDetails?.address?.line1 || undefined,
+              line2: billingAddress.line2 || existingBillingDetails?.address?.line2 || undefined,
+              city: billingAddress.city || existingBillingDetails?.address?.city || undefined,
+              state: billingAddress.state || existingBillingDetails?.address?.state || undefined,
+              postal_code: billingAddress.postal_code || existingBillingDetails?.address?.postal_code || undefined,
+              country: billingAddress.country || existingBillingDetails?.address?.country || 'US',
+            }
+          }
+        });
+        console.log("[PROCESS-CARD-PAYMENT] PaymentMethod updated with billing details");
+      } catch (e) {
+        console.log("[PROCESS-CARD-PAYMENT] Could not update PaymentMethod billing details:", e);
+      }
     }
 
     // Check rate limits BEFORE processing payment
