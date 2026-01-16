@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price mapping for each package - Membership Access (amount in cents)
+// Price mapping for each package - Método de Mejores Prácticas (amount in cents)
 const PRICES: Record<string, { amount: number; diamonds: number; priceId: string }> = {
-  "9": { amount: 900, diamonds: 5600, priceId: "price_1SqCKUDSZSnaeaRaLHsCFzAh" },      // $9.00 - Membership Access
-  "15": { amount: 1590, diamonds: 11200, priceId: "price_1SqCKpDSZSnaeaRaVFsHIpJ2" },   // $15.90 - Membership Access Plus
-  "19": { amount: 1900, diamonds: 22400, priceId: "price_1SqCL2DSZSnaeaRaVgxWnA27" },   // $19.00 - Membership Access Pro
+  "9": { amount: 900, diamonds: 5600, priceId: "price_1SqCc6DSZSnaeaRa1lN1Zk0U" },      // $9.00 - Método de Mejores Prácticas
+  "15": { amount: 1590, diamonds: 11200, priceId: "price_1SqCcGDSZSnaeaRaaPSXLLok" },   // $15.90 - Método de Mejores Prácticas Plus
+  "19": { amount: 1900, diamonds: 22400, priceId: "price_1SqCcRDSZSnaeaRaVBU38GeB" },   // $19.00 - Método de Mejores Prácticas Pro
 };
 
 serve(async (req) => {
