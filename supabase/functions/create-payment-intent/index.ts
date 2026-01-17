@@ -8,9 +8,9 @@ const corsHeaders = {
 
 // Price mapping for each package - Método de Mejores Prácticas (amount in cents)
 const PRICES: Record<string, { amount: number; description: string; priceId: string }> = {
-  "9": { amount: 900, description: "Método de Mejores Prácticas", priceId: "price_1SqCc6DSZSnaeaRa1lN1Zk0U" },      // $9.00
-  "15": { amount: 1590, description: "Método de Mejores Prácticas Plus", priceId: "price_1SqCcGDSZSnaeaRaaPSXLLok" },   // $15.90
-  "19": { amount: 1900, description: "Método de Mejores Prácticas Pro", priceId: "price_1SqCcRDSZSnaeaRaVBU38GeB" },   // $19.00
+  "9": { amount: 900, description: "Método de Mejores Prácticas", priceId: "price_1SqYA8JuI6JxdCYqXhBKEtRC" },      // $9.00
+  "15": { amount: 1590, description: "Método de Mejores Prácticas Plus", priceId: "price_1SqYAOJuI6JxdCYqBK0KqOi5" },   // $15.90
+  "19": { amount: 1900, description: "Método de Mejores Prácticas Pro", priceId: "price_1SqYBsJuI6JxdCYqHUc4Jpk5" },   // $19.00
 };
 
 serve(async (req) => {
