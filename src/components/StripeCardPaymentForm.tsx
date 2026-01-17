@@ -51,8 +51,6 @@ const translations = {
     cardNumber: 'Número de tarjeta',
     expiry: 'Vencimiento',
     cvv: 'CVV',
-    streetAddress: 'Dirección (calle y número)',
-    streetPlaceholder: 'Ej: 123 Main Street',
     postalCode: 'Código postal',
     postalPlaceholder: 'Ej: 12345',
     lookingUpAddress: 'Buscando dirección...',
@@ -84,8 +82,6 @@ const translations = {
     cardNumber: 'Card number',
     expiry: 'Expiry',
     cvv: 'CVV',
-    streetAddress: 'Street address',
-    streetPlaceholder: 'E.g., 123 Main Street',
     postalCode: 'Postal code',
     postalPlaceholder: 'E.g., 12345',
     lookingUpAddress: 'Looking up address...',
@@ -163,7 +159,7 @@ interface DetectedAddress {
 }
 
 // Lookup address from postal code using multiple APIs
-// Note: We now require customers to enter their street address for AVS verification
+// Returns city/state and constructs a generic line1 for AVS (since free APIs don't return street)
 const lookupAddressFromPostal = async (postalCode: string, countryHint: string): Promise<DetectedAddress | null> => {
   const cleanPostal = postalCode.replace(/\s/g, '');
   
@@ -179,15 +175,17 @@ const lookupAddressFromPostal = async (postalCode: string, countryHint: string):
         const cityName = place['place name'] || '';
         const stateAbbr = place['state abbreviation'] || place.state || '';
         
-        // Return city/state info - line1 (street) will be entered by customer
+        // For AVS verification, use city + postal as line1
+        // This is the best we can do without a paid address API
+        // Stripe will match on postal code at minimum
         const address: DetectedAddress = {
           country: data['country abbreviation'] || countryHint,
           city: cityName,
           region: stateAbbr,
           postal: cleanPostal,
-          line1: '', // Will be filled by customer input
+          line1: cityName || cleanPostal, // Use city as line1 fallback
         };
-        console.log('[ADDRESS] Found city/state from postal:', address);
+        console.log('[ADDRESS] Found from postal:', address);
         return address;
       }
     }
@@ -244,7 +242,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState(customerName);
-  const [streetAddress, setStreetAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<DetectedAddress>({ country: 'US', city: '', region: '', postal: '', line1: '' });
@@ -258,7 +255,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
   const [blockTimeRemaining, setBlockTimeRemaining] = useState(0);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
-  const isFormComplete = cardholderName && streetAddress && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
+  const isFormComplete = cardholderName && cardNumberComplete && cardExpiryComplete && cardCvcComplete;
   const isOnCooldown = cooldownRemaining > 0;
 
   // Check if user is blocked or on cooldown on mount and update timer
@@ -699,7 +696,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
             city: detectedAddress.city || undefined,
             state: detectedAddress.region || undefined,
             postal_code: postalCode || detectedAddress.postal || undefined,
-            line1: streetAddress || undefined, // Use customer-entered street address
+            line1: detectedAddress.line1 || detectedAddress.city || undefined,
           }
         },
       });
@@ -720,7 +717,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
       }
 
       console.log('[PAYMENT] PaymentMethod created:', paymentMethod.id);
-      console.log('[PAYMENT] Sending billing address for AVS:', { streetAddress, postalCode, detectedAddress });
+      console.log('[PAYMENT] Sending billing address for AVS:', { postalCode, detectedAddress });
 
       // Call edge function to create and confirm payment in one step
       const trackingParams = getUtmParams();
@@ -732,7 +729,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
           name: cardholderName,
           trackingParams,
           billingAddress: {
-            line1: streetAddress || null, // Customer-entered street address for AVS
+            line1: detectedAddress.line1 || detectedAddress.city || null,
             line2: null,
             city: detectedAddress.city || null,
             state: detectedAddress.region || null,
@@ -768,7 +765,7 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
                 city: detectedAddress.city || undefined,
                 state: detectedAddress.region || undefined,
                 postal_code: postalCode || detectedAddress.postal || undefined,
-                line1: streetAddress || undefined, // Use customer-entered street address
+                line1: detectedAddress.line1 || detectedAddress.city || undefined,
               }
             }
           }
@@ -939,21 +936,6 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
               />
             </div>
           </div>
-        </div>
-
-        {/* Street Address - Required for AVS verification */}
-        <div className="space-y-2">
-          <label className="block text-foreground font-medium text-sm">
-            {t.streetAddress}
-          </label>
-          <Input
-            type="text"
-            placeholder={t.streetPlaceholder}
-            value={streetAddress}
-            onChange={(e) => setStreetAddress(e.target.value)}
-            className="h-12 bg-white text-black border-gray-300"
-            required
-          />
         </div>
 
         {/* Postal Code */}
