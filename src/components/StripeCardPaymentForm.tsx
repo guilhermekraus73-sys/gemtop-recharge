@@ -55,6 +55,7 @@ const translations = {
     postalPlaceholder: 'Ej: 12345',
     lookingUpAddress: 'Buscando dirección...',
     securePayment: 'Pago 100% seguro con encriptación SSL',
+    acceptedCards: 'Aceptamos tarjetas de débito y crédito',
     waitBeforeRetry: 'Por seguridad, espera {seconds}s antes de intentar nuevamente',
     processing: 'Procesando...',
     wait: 'Espera {seconds}s...',
@@ -86,6 +87,7 @@ const translations = {
     postalPlaceholder: 'E.g., 12345',
     lookingUpAddress: 'Looking up address...',
     securePayment: '100% secure payment with SSL encryption',
+    acceptedCards: 'We accept debit and credit cards',
     waitBeforeRetry: 'For security, wait {seconds}s before trying again',
     processing: 'Processing...',
     wait: 'Wait {seconds}s...',
@@ -986,6 +988,11 @@ const StripeCardPaymentForm: React.FC<StripeCardPaymentFormProps> = ({
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <Shield className="w-4 h-4" />
           <span>{t.securePayment}</span>
+        </div>
+
+        {/* Accepted Cards Notice */}
+        <div className="text-center text-muted-foreground text-sm">
+          💳 {t.acceptedCards}
         </div>
 
         {/* Cooldown Notice */}
