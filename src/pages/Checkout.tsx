@@ -173,7 +173,7 @@ const Checkout: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-border bg-card text-foreground font-medium"
                 >
                   <CreditCard className="w-4 h-4" />
-                  Card
+                  Credit / Debit
                 </button>
               </div>
 
@@ -182,7 +182,7 @@ const Checkout: React.FC = () => {
                 <div>
                   <Input
                     type="text"
-                    placeholder="Credit card number"
+                    placeholder="Credit / Debit card number"
                     value={cardNumber}
                     onChange={handleCardNumberChange}
                     className="h-12 bg-card border-border"
