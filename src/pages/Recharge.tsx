@@ -101,8 +101,8 @@ const Recharge: React.FC = () => {
       url.searchParams.set('src', xcodValue); // Passar também como src para compatibilidade
     }
 
-    console.log('Redirecting to Hotmart:', url.toString());
-    window.location.href = url.toString();
+    console.log('Redirecting to Shopify:', url.toString());
+    window.open(url.toString(), '_blank');
   };
 
   const selectedPack = packages.find((p) => p.id === selectedPackage);
