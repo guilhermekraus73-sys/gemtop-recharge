@@ -24,9 +24,9 @@ type Package = {
 };
 
 const packages: Package[] = [
-  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=t7i2knq0&checkoutMode=10" },
-  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=i80kzx2g&checkoutMode=10" },
-  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, paymentUrl: "https://pay.hotmart.com/Y103349631S?off=g1edxca2&checkoutMode=10" },
+  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212923712:1?channel=buy_button" },
+  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212956480:1?channel=buy_button" },
+  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212956480:1?channel=buy_button" },
 ];
 
 const paymentMethods = [
