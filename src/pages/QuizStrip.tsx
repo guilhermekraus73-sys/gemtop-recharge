@@ -7,6 +7,12 @@ import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
 import q2DjAlok from "@/assets/quiz/q2-dj-alok.jpg";
 import q3Map from "@/assets/quiz/q3-map.jpg";
 import q4Sniper from "@/assets/quiz/q4-sniper.jpg";
+import q5Squad from "@/assets/quiz/q5-squad.jpg";
+import q6Pets from "@/assets/quiz/q6-pets.jpg";
+import q7Ranks from "@/assets/quiz/q7-ranks.jpg";
+import q8Vehicles from "@/assets/quiz/q8-vehicles.jpg";
+import q9Skins from "@/assets/quiz/q9-skins.jpg";
+import q10Airdrop from "@/assets/quiz/q10-airdrop.jpg";
 
 type Question = {
   question: string;
@@ -39,6 +45,42 @@ const questions: Question[] = [
     options: ["Kar98k", "AWM", "M82B", "SVD"],
     correctIndex: 1,
     imageUrl: q4Sniper,
+  },
+  {
+    question: "¿Cuántos jugadores pueden estar en un squad en el modo clásico?",
+    options: ["2", "5", "3", "4"],
+    correctIndex: 3,
+    imageUrl: q5Squad,
+  },
+  {
+    question: "¿Cuál es la función de las mascotas en Free Fire?",
+    options: ["Atacar enemigos", "Cargar objetos", "Solo decoración", "Proporcionar habilidades especiales"],
+    correctIndex: 3,
+    imageUrl: q6Pets,
+  },
+  {
+    question: "¿Cuál es el rango más alto en el modo clasificatorio de Free Fire?",
+    options: ["Heroico", "Diamante", "Gran Maestro", "Maestro"],
+    correctIndex: 0,
+    imageUrl: q7Ranks,
+  },
+  {
+    question: "¿Qué vehículo es conocido como el más resistente en Free Fire?",
+    options: ["Monster Truck", "Moto", "Tuk Tuk", "Auto"],
+    correctIndex: 0,
+    imageUrl: q8Vehicles,
+  },
+  {
+    question: "¿Qué son las skins en Free Fire?",
+    options: ["Misiones", "Moneda del juego", "Personalizaciones visuales", "Armas especiales"],
+    correctIndex: 2,
+    imageUrl: q9Skins,
+  },
+  {
+    question: "¿Qué encuentras en un airdrop en Free Fire?",
+    options: ["Comida", "Mascotas", "Vehículos", "Objetos raros y armas poderosas"],
+    correctIndex: 3,
+    imageUrl: q10Airdrop,
   },
 ];
 
@@ -139,10 +181,10 @@ const QuizStrip: React.FC = () => {
               <span>🔹</span> Reglas del Quiz
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• 4 preguntas sobre Free Fire</li>
+              <li>• 10 preguntas sobre Free Fire</li>
               <li>• Elige una respuesta para cada pregunta</li>
               <li>• Confirma tu respuesta para avanzar</li>
-              <li>• Necesitas al menos 3 respuestas correctas (75%) para ganar</li>
+              <li>• Necesitas al menos 7 respuestas correctas (70%) para ganar</li>
             </ul>
           </div>
 
@@ -218,7 +260,7 @@ const QuizStrip: React.FC = () => {
           </div>
 
           <p className="text-sm text-muted-foreground mb-6">
-            Necesitas al menos 3 respuestas correctas para ganar el descuento.
+            Necesitas al menos 7 respuestas correctas para ganar el descuento.
             ¡Inténtalo de nuevo!
           </p>
 
