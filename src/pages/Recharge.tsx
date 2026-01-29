@@ -24,9 +24,9 @@ type Package = {
 };
 
 const packages: Package[] = [
-  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212923712:1?channel=buy_button" },
-  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212956480:1?channel=buy_button" },
-  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, paymentUrl: "https://6przeb-pi.myshopify.com/cart/51470212956480:1?channel=buy_button" },
+  { id: 1, diamonds: 5600, price: 9.0, bonus: 1120, paymentUrl: "https://pfdxbd-gx.myshopify.com/cart/51354363855064:1?channel=buy_button" },
+  { id: 2, diamonds: 11200, price: 15.9, bonus: 2240, paymentUrl: "https://pfdxbd-gx.myshopify.com/cart/51354363887832:1?channel=buy_button" },
+  { id: 3, diamonds: 22400, price: 19.0, bonus: 4480, paymentUrl: "https://pfdxbd-gx.myshopify.com/cart/51354363920600:1?channel=buy_button" },
 ];
 
 const paymentMethods = [
@@ -102,7 +102,7 @@ const Recharge: React.FC = () => {
     }
 
     console.log('Redirecting to Shopify:', url.toString());
-    window.open(url.toString(), '_blank');
+    window.location.href = url.toString();
   };
 
   const selectedPack = packages.find((p) => p.id === selectedPackage);
