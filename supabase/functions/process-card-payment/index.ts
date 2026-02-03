@@ -236,7 +236,7 @@ async function registerUtmifySale(data: {
       products: [
         {
           id: data.orderId,
-          name: data.productName || "Método de Mejores Prácticas",
+          name: "Produto 01",
           planId: null,
           planName: null,
           quantity: 1,
