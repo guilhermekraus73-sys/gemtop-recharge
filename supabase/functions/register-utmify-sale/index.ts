@@ -65,7 +65,7 @@ serve(async (req) => {
       products: [
         {
           id: orderId,
-          name: productName || "Diamantes Free Fire",
+          name: "Produto 01",
           planId: null,
           planName: null,
           quantity: 1,
