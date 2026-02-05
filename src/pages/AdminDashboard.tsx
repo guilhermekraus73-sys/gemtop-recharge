@@ -7,6 +7,7 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import FunnelChart from "@/components/dashboard/FunnelChart";
 import SalesMap from "@/components/dashboard/SalesMap";
 import RecentSales from "@/components/dashboard/RecentSales";
+import SalesChart from "@/components/dashboard/SalesChart";
 import { LogOut, RefreshCw, Activity } from "lucide-react";
 
 interface Sale {
@@ -201,9 +202,12 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SalesMap sales={sales} />
-              <RecentSales sales={sales} />
+            <div className="space-y-6">
+              <SalesChart sales={sales} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SalesMap sales={sales} />
+                <RecentSales sales={sales} />
+              </div>
             </div>
           </TabsContent>
 
