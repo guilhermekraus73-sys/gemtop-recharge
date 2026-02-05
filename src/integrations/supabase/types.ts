@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      funnel_events: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          page_url: string | null
+          session_id: string
+          step: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          page_url?: string | null
+          session_id: string
+          step: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          page_url?: string | null
+          session_id?: string
+          step?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       payment_attempts: {
         Row: {
           attempt_type: string
@@ -41,15 +83,106 @@ export type Database = {
         }
         Relationships: []
       }
+      sales: {
+        Row: {
+          amount_cents: number
+          city: string | null
+          country_code: string | null
+          created_at: string
+          currency: string
+          customer_name: string | null
+          email: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          product_name: string | null
+          session_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          amount_cents: number
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string | null
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          product_name?: string | null
+          session_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string | null
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          product_name?: string | null
+          session_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       clean_old_payment_attempts: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +309,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

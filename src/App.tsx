@@ -24,6 +24,8 @@ import Checkout19En from "./pages/Checkout19En";
 import ThankYou from "./pages/ThankYou";
 import ThankYouBoleto from "./pages/ThankYouBoleto";
 import TestFunnel from "./pages/TestFunnel";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +59,8 @@ const App = () => (
           <Route path="/obrigado" element={<ThankYou />} />
           <Route path="/obrigado-boleto" element={<ThankYouBoleto />} />
           <Route path="/test-funnel" element={<TestFunnel />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
