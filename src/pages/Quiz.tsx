@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
+import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 import freefireLogoBanner from "@/assets/freefire-logo.png";
 import q1BattleRoyale from "@/assets/quiz/q1-battle-royale.jpg";
@@ -103,8 +104,18 @@ const Quiz: React.FC = () => {
   const totalQuestions = questions.length;
   const progressPercent = Math.round(((currentQuestion + 1) / totalQuestions) * 100);
 
-  // Preload all images on mount for instant transitions
+  // Track quiz page view and preload images
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    trackFunnel("quiz", { 
+      source: params.get("utm_source") || localStorage.getItem("utm_source"),
+      metadata: { 
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign")
+      }
+    });
+
+    // Preload all images for instant transitions
     questions.forEach((q) => {
       const img = new Image();
       img.src = q.imageUrl;

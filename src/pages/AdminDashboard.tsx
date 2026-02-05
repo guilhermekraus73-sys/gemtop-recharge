@@ -8,6 +8,7 @@ import FunnelChart from "@/components/dashboard/FunnelChart";
 import SalesMap from "@/components/dashboard/SalesMap";
 import RecentSales from "@/components/dashboard/RecentSales";
 import SalesChart from "@/components/dashboard/SalesChart";
+import LeadBehaviorPanel from "@/components/dashboard/LeadBehaviorPanel";
 import { LogOut, RefreshCw, Activity } from "lucide-react";
 
 interface Sale {
@@ -32,10 +33,20 @@ interface FunnelStep {
   label: string;
 }
 
+interface FunnelEvent {
+  session_id: string;
+  step: string;
+  created_at: string;
+  country_code: string | null;
+  device_type: string | null;
+  utm_source: string | null;
+}
+
 const AdminDashboard = () => {
   const { user, loading, signOut } = useAdminAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [funnelData, setFunnelData] = useState<FunnelStep[]>([]);
+  const [funnelEvents, setFunnelEvents] = useState<FunnelEvent[]>([]);
   const [todayVisitors, setTodayVisitors] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -59,10 +70,13 @@ const AdminDashboard = () => {
 
     const { data: funnelRaw } = await supabase
       .from("funnel_events")
-      .select("step")
+      .select("*")
       .gte("created_at", today.toISOString());
 
     if (funnelRaw) {
+      // Store raw events for behavior analysis
+      setFunnelEvents(funnelRaw as FunnelEvent[]);
+
       // Count by step
       const stepCounts: Record<string, number> = {};
       funnelRaw.forEach((event) => {
@@ -82,8 +96,8 @@ const AdminDashboard = () => {
       setFunnelData(funnelArray);
 
       // Count unique sessions as visitors
-      const uniqueSessions = new Set(funnelRaw.map((e: { step: string }) => e.step)).size;
-      setTodayVisitors(funnelRaw.length);
+      const uniqueSessions = new Set(funnelRaw.map((e) => e.session_id)).size;
+      setTodayVisitors(uniqueSessions);
     }
 
     setRefreshing(false);
@@ -199,6 +213,9 @@ const AdminDashboard = () => {
             <TabsTrigger value="funnel" className="data-[state=active]:bg-purple-600">
               Funil
             </TabsTrigger>
+            <TabsTrigger value="behavior" className="data-[state=active]:bg-purple-600">
+              Comportamento
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
@@ -220,6 +237,10 @@ const AdminDashboard = () => {
               <FunnelChart data={funnelData} />
               <RecentSales sales={sales} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="behavior" className="mt-4">
+            <LeadBehaviorPanel events={funnelEvents} />
           </TabsContent>
         </Tabs>
       </main>

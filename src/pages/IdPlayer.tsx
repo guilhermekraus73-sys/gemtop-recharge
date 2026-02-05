@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -13,6 +14,18 @@ const IdPlayer: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   useUtmifyStripePixel();
+
+  // Track id-player page view
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    trackFunnel("id-player", { 
+      source: params.get("utm_source") || localStorage.getItem("utm_source"),
+      metadata: { 
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign")
+      }
+    });
+  }, [location.search]);
 
   const handleValidate = () => {
     if (!playerId.trim()) {
