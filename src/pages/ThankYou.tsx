@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { CheckCircle, Diamond, Gift, Clock, AlertTriangle, Sparkles, BookOpen } from "lucide-react";
 import { useUtmifyHotmartPixel } from "@/hooks/useUtmifyHotmartPixel";
-import { track } from "@/hooks/useFunnelTracking";
+import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 const freefireLogo = "https://recargasdiamante.site/assets/freefire-logo-khkzMQoZ.png";
 
@@ -15,9 +15,14 @@ const ThankYou = () => {
   
   // Track purchase on thank you page load
   useEffect(() => {
-    const source = new URLSearchParams(window.location.search).get('utm_source') || 
-                   localStorage.getItem('utm_source') || null;
-    track('comprou', 'diamantes', source);
+    const params = new URLSearchParams(window.location.search);
+    trackFunnel("obrigado", { 
+      source: params.get("utm_source") || localStorage.getItem("utm_source"),
+      metadata: { 
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign")
+      }
+    });
   }, []);
 
   return (

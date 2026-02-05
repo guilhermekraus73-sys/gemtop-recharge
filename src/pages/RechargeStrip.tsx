@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -45,6 +46,17 @@ const RechargeStrip: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   useUtmifyStripePixel();
+
+  // Track recharge page view
+  useEffect(() => {
+    trackFunnel("recharge", { 
+      source: searchParams.get("utm_source") || localStorage.getItem("utm_source"),
+      metadata: { 
+        utm_medium: searchParams.get("utm_medium"),
+        utm_campaign: searchParams.get("utm_campaign")
+      }
+    });
+  }, [searchParams]);
 
   const handleContinue = () => {
     if (!selectedPackage) {

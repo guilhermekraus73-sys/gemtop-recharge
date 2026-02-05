@@ -17,22 +17,24 @@ interface TrackOptions {
 
 export const trackFunnel = async (step: string, options: TrackOptions = {}): Promise<void> => {
   const sessionId = getSessionId();
+  const params = new URLSearchParams(window.location.search);
   
   try {
-    await fetch('https://wuoxjuirisedgpioqmmv.supabase.co/functions/v1/track', {
+    await fetch('https://wzalbseskuzaieeogomm.supabase.co/functions/v1/track-funnel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        step: step,
         session_id: sessionId,
-        product_id: options.productId || null,
-        source: options.source || null,
-        metadata: options.metadata || {}
+        step: step,
+        page_url: window.location.href,
+        utm_source: options.source || params.get('utm_source') || null,
+        utm_medium: params.get('utm_medium') || null,
+        utm_campaign: params.get('utm_campaign') || null,
       })
     });
-    console.log('Evento rastreado:', step);
+    console.log('[FUNNEL] Evento rastreado:', step);
   } catch (error) {
-    console.error('Erro ao rastrear:', error);
+    console.error('[FUNNEL] Erro ao rastrear:', error);
   }
 };
 
