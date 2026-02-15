@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+
 
 import freefireBannerEn from "@/assets/freefire-banner-en.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -12,7 +12,7 @@ const IdPlayerEn: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  useUtmifyStripePixel();
+  
 
   const handleValidate = () => {
     if (!playerId.trim()) {

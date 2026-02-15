@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+
 import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
@@ -13,7 +13,7 @@ const IdPlayer: React.FC = () => {
   const [playerId, setPlayerId] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  useUtmifyStripePixel();
+  
 
   // Track id-player page view
   useEffect(() => {

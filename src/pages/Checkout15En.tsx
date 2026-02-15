@@ -7,7 +7,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripeCardPaymentForm from '@/components/StripeCardPaymentForm';
 import diamondBonus from '@/assets/diamond-bonus.png';
 import freefireBannerEn from '@/assets/freefire-banner-en.jpg';
-import { useUtmifyStripePixel } from '@/hooks/useUtmifyStripePixel';
+
 import { track, trackFunnel } from '@/hooks/useFunnelTracking';
 
 const stripePromise = loadStripe('pk_live_51Q0TEVDSZSnaeaRaLi0yvUWr1YsyCtyYZOG0x4KESqZ1DIxv58CkU9FfYAqMaQQzxxZ4UnPSGF9nYVo2an5aEs15006nLskD1m');
@@ -26,7 +26,7 @@ const Checkout15En: React.FC = () => {
   const [emailError, setEmailError] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [dadosTracked, setDadosTracked] = useState(false);
-  useUtmifyStripePixel();
+  
   
   const getSource = () => new URLSearchParams(window.location.search).get('utm_source') || 
                           localStorage.getItem('utm_source') || null;
