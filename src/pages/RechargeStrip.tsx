@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+
 import { trackFunnel } from "@/hooks/useFunnelTracking";
 
 import membershipsBanner from "@/assets/memberships-banner.jpg";
@@ -45,7 +45,7 @@ const RechargeStrip: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState("credit");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  useUtmifyStripePixel();
+  
 
   // Track recharge page view
   useEffect(() => {

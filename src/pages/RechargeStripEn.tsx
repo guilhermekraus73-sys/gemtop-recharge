@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useUtmifyStripePixel } from "@/hooks/useUtmifyStripePixel";
+
 
 import freefireBannerEn from "@/assets/freefire-banner-en.jpg";
 import garenaLogo from "@/assets/garena-logo.png";
@@ -38,7 +38,7 @@ const RechargeStripEn: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState("credit");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  useUtmifyStripePixel();
+  
 
   const handleContinue = () => {
     if (!selectedPackage) {
