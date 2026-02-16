@@ -145,8 +145,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         localStorage.removeItem('stripe_payment_pending');
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // UTMify registration is handled by process-card-payment edge function
-        console.log('[UTMIFY] Payment succeeded, registration handled by edge function', { paymentIntentId: paymentIntent.id });
+        // Register sale with UTMify before redirecting
+        await registerUtmifySale(paymentIntent.id);
         localStorage.removeItem('stripe_payment_pending');
         toast.success('¡Pago realizado con éxito!');
         onSuccess();
